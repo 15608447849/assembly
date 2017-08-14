@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/assembly.iml" filepath="$PROJECT_DIR$/.idea/modules/assembly.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/assembly_main.iml" filepath="$PROJECT_DIR$/.idea/modules/assembly_main.iml" group="assembly" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/assembly_test.iml" filepath="$PROJECT_DIR$/.idea/modules/assembly_test.iml" group="assembly" />
+    </modules>
+  </component>
+</project>
