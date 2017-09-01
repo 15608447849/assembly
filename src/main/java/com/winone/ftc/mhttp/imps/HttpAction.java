@@ -1,8 +1,8 @@
 package com.winone.ftc.mhttp.imps;
 
-import com.winone.ftc.mentity.mbean.ContrailThread;
-import com.winone.ftc.mentity.mbean.State;
-import com.winone.ftc.mentity.mbean.Task;
+import com.winone.ftc.mhttp.itface.ContrailThread;
+import com.winone.ftc.mentity.mbean.entity.State;
+import com.winone.ftc.mentity.mbean.entity.Task;
 import com.winone.ftc.mtools.FileUtil;
 import com.winone.ftc.mtools.TaskUtils;
 
@@ -60,7 +60,7 @@ public class HttpAction implements ContrailThread.onAction
             try {
                 httpConnection = (HttpURLConnection) new URL(task.getUri()).openConnection();
 
-                httpConnection.setRequestProperty("Connetion", "Keep-Alive");
+                httpConnection.setRequestProperty("Connection", "Keep-Alive");
                 httpConnection.setRequestProperty("Content-Type", "application/octet-stream");
                 httpConnection.setRequestProperty("Charset", "UTF-8");
                 TaskUtils.connectParam(httpConnection,task.getParams());
@@ -74,13 +74,13 @@ public class HttpAction implements ContrailThread.onAction
                 httpConnection.connect();
 
                 int code = httpConnection.getResponseCode();
-//                Log.i("连接返回: "+ code);
+
                 if ( code==206 || code==200) {
                     input = httpConnection.getInputStream();
                     out = new RandomAccessFile(TaskUtils.getTmpFile(task), "rw");
                     out.seek(start+progress);
 
-                    byte[] b = new byte[1024 * 1024]; // 10k 缓存
+                    byte[] b = new byte[1024*8]; // 8k 缓存
                     int len ;
                     ByteBuffer buff = ByteBuffer.allocate(b.length);//缓冲区
                     FileChannel outChannel =  out.getChannel();
@@ -94,6 +94,7 @@ public class HttpAction implements ContrailThread.onAction
                          //更新状态
                          state.putThreadMapValue(key,progress);//放入的是进度
                     }
+
                     isWorking = false;
                     outChannel.close();
                     input.close();
@@ -112,8 +113,7 @@ public class HttpAction implements ContrailThread.onAction
                         }
                     }
                 } else {
-                    state.setError("http action server resp code:" + code);
-                    state.setState(-1);
+                        throw new IllegalStateException("http download action entity get server resp code:" + code);
                 }
 
             } catch (Exception e) {

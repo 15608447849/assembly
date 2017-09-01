@@ -4,6 +4,7 @@ import com.winone.ftc.mtools.Log;
 import com.winone.ftc.mtools.StringUtil;
 
 import java.io.UnsupportedEncodingException;
+import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
@@ -27,7 +28,9 @@ public abstract class Session implements CompletionHandler<Integer, SessionBean>
 
         if (!socketImp.isAlive()) return;
         if (integer == -1){
-            socketImp.ConnectError(new Exception("socket connect is close."));
+            SocketException socketException = new SocketException("socket connect is close.");
+            socketImp.getCommunication().error(this,null,socketException);
+            socketImp.ConnectError(socketException);
             return;
         }
         if (sessionBean.getType() == 1){
@@ -70,7 +73,7 @@ public abstract class Session implements CompletionHandler<Integer, SessionBean>
                     }
                 }
             } catch (Exception e) {
-                e.printStackTrace();
+                socketImp.getCommunication().error(this,null,e);
             }
         }
         //再次监听读取
@@ -79,6 +82,7 @@ public abstract class Session implements CompletionHandler<Integer, SessionBean>
 
     @Override
     public void failed(Throwable throwable, SessionBean sessionBean) {
+        socketImp.getCommunication().error(this,throwable,null);
         socketImp.ConnectError(throwable);
     }
 
@@ -111,27 +115,37 @@ public abstract class Session implements CompletionHandler<Integer, SessionBean>
         //发送消息
         send(sessionBean);
     }
-
-
     /**
      * 读取数据监听
      * @param sessionBean
      */
     public void read(SessionBean sessionBean){
-        ByteBuffer buffer = sessionBean.getReadBuffer().compactBuf();
-        socketImp.getSocket().read( buffer, sessionBean,this);
+        try {
+            if (sessionBean==null) return;
+            ByteBuffer buffer = sessionBean.getReadBuffer().compactBuf();
+            if (buffer!=null && socketImp.isAlive()){
+                socketImp.getSocket().read( buffer, sessionBean,this);
+            }
+        } catch (Exception e) {
+            socketImp.getCommunication().error(this,null,e);
+        }
     }
     /**
      * 发送数据监听
      */
     public void send(SessionBean sessionBean) {
-        ByteBuffer buffer = sessionBean.getWriteBuffer().flipBuf();
-        if (buffer==null) return;
-        socketImp.getSocket().write(buffer,sessionBean,this); //发送消息并且重置
-        isWriteable = false;
+        try {
+            ByteBuffer buffer = sessionBean.getWriteBuffer().flipBuf();
+            if (buffer!=null && socketImp.isAlive()){
+                socketImp.getSocket().write(buffer,sessionBean,this); //发送消息并且重置
+                isWriteable = false;
+            }
+        } catch (Exception e) {
+           socketImp.getCommunication().error(this,null,e);
+        }
     }
     public void close(){
-        socketImp=null;
+        socketImp.close();
     }
     public Op getOp(){
         return this;
@@ -139,4 +153,5 @@ public abstract class Session implements CompletionHandler<Integer, SessionBean>
     public AsynchronousSocketChannel getSocket(){
         return socketImp.getSocket();
     }
+    public SockServer getServer(){return socketImp.getServer();}
 }

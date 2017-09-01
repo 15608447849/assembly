@@ -1,8 +1,7 @@
-package com.winone.ftc.mentity.mbean;
+package com.winone.ftc.mentity.mbean.singer;
 
 import com.winone.ftc.mtools.TaskUtils;
 import com.winone.ftc.mtools.Log;
-
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.concurrent.locks.ReentrantLock;
@@ -12,44 +11,44 @@ import java.util.concurrent.locks.ReentrantLock;
  * Created by lzp on 2017/5/9.
  * //状态更新
  */
-public class StateNotifyList extends LinkedList implements Runnable {
+public class StateNotification extends Thread {
     private ReentrantLock lock = new ReentrantLock();
+    private final LinkedList<com.winone.ftc.mentity.mbean.entity.State> list = new LinkedList<>();
     private int checkTime = 1;
-    private StateNotifyList(){
-       Thread thread = new Thread(this);
-       thread.setDaemon(true);
-       thread.setName("ftc_notify_thread");
-       thread.start();
+
+    private StateNotification(){
+       setDaemon(true);
+       setName("FTC@StateNotification");
+       start();
         //Log.i("更新状态线程", "创建完成>>[每秒检测状态信息,写入文件]");
     }
     private static class InstantHolder{
-        private static StateNotifyList instant = new StateNotifyList();
+        private static StateNotification instant = new StateNotification();
     }
-    public static StateNotifyList getInstant(){
+    public static StateNotification getInstant(){
         return InstantHolder.instant;
     }
 
 
-    public void putState(State state){
+    public void putState(com.winone.ftc.mentity.mbean.entity.State state){
         try{
             lock.lock();
-            add(state);
+            list.add(state);
         }finally {
             lock.unlock();
         }
-
     }
-    public void removeState(State state){
+    public void removeState(com.winone.ftc.mentity.mbean.entity.State state){
         try {
             lock.lock();
-            Iterator<State> itr = this.iterator();
+            Iterator<com.winone.ftc.mentity.mbean.entity.State> itr = list.iterator();
             while (itr.hasNext()){
                 if (itr.next().getTask().equals(state.getTask())) {
                     itr.remove();
                 }
             }
             TaskUtils.sendStateToTask(state);
-            Log.w(Thread.currentThread().getName() + "  监听移除: "+ state);
+//            Log.e(index+ "> "+state.toString());
         }finally {
             lock.unlock();
         }
@@ -76,30 +75,30 @@ public class StateNotifyList extends LinkedList implements Runnable {
     private void notifyState() {
         try {
             lock.lock();
-            if (size()>0){
-                Log.e("------------------------开始检测------------------------");
-                Iterator<State> itr = this.iterator();
-                State state;
+            if (list.size()>0){
+                Iterator<com.winone.ftc.mentity.mbean.entity.State> itr = list.iterator();
+                com.winone.ftc.mentity.mbean.entity.State state;
+                int index = 0;
                 while (itr.hasNext()){
+                    index++;
                     state = itr.next();
-                    if (state.getState() == 1 || state.getState()== -1){
-                        itr.remove();
-                    }
-
+//                    if (state.getState() == 1 || state.getState()== -1){
+//                        itr.remove();
+//                    }
                     if (state.getState() == 0){
                         //進行中
                         if (state.isRecord()){
                             state.setPreCurSizeByTime(checkTime);
                             TaskUtils.sendStateToTask(state);
                         }
-                        Log.e(state.toString());
+                        Log.e(index+ "> "+state.toString());
                     }
+
                 }
-                Log.e("\n");
+                Log.e("- - - - - -");
             }
         }finally {
             lock.unlock();
         }
-
     }
 }

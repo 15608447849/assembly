@@ -1,8 +1,8 @@
 package com.winone.ftc.mtools;
 
-import com.winone.ftc.mentity.mbean.DownloadFileRecordSql;
-import com.winone.ftc.mentity.mbean.State;
-import com.winone.ftc.mentity.mbean.Task;
+import com.winone.ftc.mentity.mbean.singer.DownloadFileRecordSql;
+import com.winone.ftc.mentity.mbean.entity.State;
+import com.winone.ftc.mentity.mbean.entity.Task;
 
 import java.io.File;
 import java.net.HttpURLConnection;
@@ -60,23 +60,29 @@ public class TaskUtils {
         }
         return null;
     }
+    public static String filterPath(String path){
+        path = path.replace("\\","/");
+        return path;
+    }
     //获取 配置文件路径
     public static String getConfigFile(Task task){
-        return task.getLocalPath()+ FileUtil.SEPARATOR + task.getDconfig();
+        return filterPath(task.getLocalPath()+ FileUtil.SEPARATOR + task.getDconfig());
     }
     //获取 临时文件路径
     public static String getTmpFile(Task task){
-        return task.getLocalPath()+ FileUtil.SEPARATOR + task.getTmpfile();
+        return filterPath(task.getLocalPath()+ FileUtil.SEPARATOR + task.getTmpfile());
     }
     //获取本地文件路径
     public static String getLocalFile(Task task){
-        return task.getLocalPath()+ FileUtil.SEPARATOR + task.getLocalFileName();
+        return filterPath(task.getLocalPath()+ FileUtil.SEPARATOR + task.getLocalFileName());
     }
     //获取远程文件路径
     public static String getRemoteFile(Task task){
-        return  task.getRemotePath()!=null && !"".equals(task.getRemotePath())?
+        return  filterPath(
+                task.getRemotePath()!=null && !"".equals(task.getRemotePath())?
                     task.getRemotePath() + FileUtil.SEPARATOR + task.getRemoteFileName():
-                    FileUtil.SEPARATOR + task.getRemoteFileName();
+                    FileUtil.SEPARATOR + task.getRemoteFileName()
+        );
     }
     //修改名字
     public static void renameTo(Task task){

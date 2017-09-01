@@ -3,6 +3,8 @@ package m.tcps.s;
 import com.winone.ftc.mtools.Log;
 import com.winone.ftc.mtools.NetworkUtil;
 import m.tcps.p.CommunicationAction;
+import m.tcps.p.SockServer;
+import m.tcps.p.SocketImp;
 
 import java.io.IOException;
 
@@ -22,7 +24,7 @@ import java.util.concurrent.Executors;
  * Created by user on 2017/7/8.
  * aio 实现
  */
-public class FtcSocketServer implements CompletionHandler<AsynchronousSocketChannel, ClientConnect> {
+public class FtcSocketServer implements SockServer,CompletionHandler<AsynchronousSocketChannel, ClientConnect> {
     //监听本地地址信息
     private InetSocketAddress address;
     //异步连接socket
@@ -30,7 +32,7 @@ public class FtcSocketServer implements CompletionHandler<AsynchronousSocketChan
 
     private CommunicationAction action;
 
-    private LinkedList<ClientConnect> clientConnectList = new LinkedList<>();
+    private final LinkedList<SocketImp> clientConnectList = new LinkedList<>();
 
     public FtcSocketServer(InetSocketAddress address,CommunicationAction action) {
         this.address = address;
@@ -40,7 +42,7 @@ public class FtcSocketServer implements CompletionHandler<AsynchronousSocketChan
 
     //打开监听连接
     public FtcSocketServer openListener() throws IOException{
-        listener = AsynchronousServerSocketChannel.open(AsynchronousChannelGroup.withThreadPool(Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()*4))).bind(address);
+        listener = AsynchronousServerSocketChannel.open(AsynchronousChannelGroup.withThreadPool(Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()))).bind(address);
         listener.setOption(StandardSocketOptions.SO_REUSEADDR,true);
         Log.i("TCP SERVER LISTEN : "+ listener.getLocalAddress());
         return this;
@@ -65,12 +67,9 @@ public class FtcSocketServer implements CompletionHandler<AsynchronousSocketChan
         throwable.printStackTrace();
         launchAccept();
     }
-
-    public List getClientConnectList(){
+    @Override
+    public List<SocketImp> getCurrentClientList(){
         return clientConnectList;
-    }
-    public int getClientConnectListSize(){
-        return clientConnectList.size();
     }
 
     public synchronized void add(ClientConnect clientConnect) {
@@ -79,5 +78,10 @@ public class FtcSocketServer implements CompletionHandler<AsynchronousSocketChan
 
     public synchronized void remove(ClientConnect clientConnect) {
         clientConnectList.remove(clientConnect);
+    }
+
+    @Override
+    public int getCurrentClientSize() {
+        return clientConnectList.size();
     }
 }

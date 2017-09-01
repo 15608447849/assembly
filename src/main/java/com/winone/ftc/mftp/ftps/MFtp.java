@@ -1,6 +1,6 @@
 package com.winone.ftc.mftp.ftps;
 
-import com.winone.ftc.mentity.mbean.FtpInfo;
+import com.winone.ftc.mentity.mbean.entity.FtpInfo;
 import com.winone.ftc.mftp.itface.FtpClientIntface;
 import com.winone.ftc.mtools.Log;
 import it.sauronsoftware.ftp4j.*;

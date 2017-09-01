@@ -1,4 +1,4 @@
-package com.winone.ftc.mentity.mbean;
+package com.winone.ftc.mentity.mbean.entity;
 
 import com.winone.ftc.mcore.imps.ManagerImp;
 import com.winone.ftc.mtools.Log;
@@ -36,7 +36,7 @@ public class TaskFactory {
         task.setTid(getCurrentDate());
         task.setType(Task.Type.HTTP_DOWN);
         task.setState(Task.State.NEW);
-        task.setUri(StringUtil.encodeUrl(url));
+        task.setUri(StringUtil.encodeUrl(StringUtil.filter(url)));
         task.setHttpType(httpType);
         task.setLocalPath(localDir);
         task.setLocalFileName(fileName);
@@ -58,7 +58,7 @@ public class TaskFactory {
     //切割ftp字符串 -
     public static HashMap<String,String> parseFtpUrl(String uri){
         //ftp://user:pass@host:port/path/file
-
+        uri = StringUtil.filter(uri);
         String str = uri.substring(uri.indexOf("//") + 2);
         String[] arr = str.split("@");
         String user = arr[0].substring(0,arr[0].indexOf(":"));
@@ -89,6 +89,7 @@ public class TaskFactory {
     }
     //创建 ftp 下载任务
     public static Task ftpTaskDown(String url,String localDir,String fileName,boolean isCove){
+        url = StringUtil.filter(url);
         //解析协议 -> ftp信息
         Map<String,String> map = parseFtpUrl(url);
         Task task = new Task();
@@ -111,7 +112,7 @@ public class TaskFactory {
     public static Task httpTaskUpdate(String url,String httpType,String localDir,String fileName,String remotePath,String remoteName){
         Task task = new Task();
         task.setTid(getCurrentDate());
-        task.setUri(url);
+        task.setUri(StringUtil.filter(url));
         task.setType(Task.Type.HTTP_UP);
         task.setState(Task.State.NEW);
         task.setLocalPath(localDir);
@@ -126,7 +127,7 @@ public class TaskFactory {
     public static Task httpTaskUpdate(String url, String httpType, InputStream inputStream,String remotePath, String remoteName){
         Task task = new Task();
         task.setTid(getCurrentDate());
-        task.setUri(url);
+        task.setUri(StringUtil.filter(url));
         task.setType(Task.Type.HTTP_UP);
         task.setState(Task.State.NEW);
         task.setHttpType(httpType);
@@ -138,6 +139,7 @@ public class TaskFactory {
 
     //ftp上传
     public static Task ftpTaskUpdate(String url,String localDir,String fileName){
+        url = StringUtil.filter(url);
         //解析协议 -> ftp信息
         Map<String,String> map = parseFtpUrl(url);
 

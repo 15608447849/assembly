@@ -1,4 +1,4 @@
-package com.winone.ftc.mentity.mbean;
+package com.winone.ftc.mentity.mbean.singer;
 
 import com.winone.ftc.mtools.Log;
 import m.sqlites.SQLiteHelper;
@@ -15,7 +15,7 @@ public class DownloadFileRecordSql extends Thread {
     private DownloadFileRecordSql(){
         initialization();
         setDaemon(true);
-        setName("ftc_sql_thread");
+        setName("FTC@DownloadFileRecodeToSQL");
         start();
     }
 

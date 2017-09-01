@@ -1,6 +1,6 @@
 package com.winone.ftc.mentity.itface;
 
-import com.winone.ftc.mentity.mbean.Task;
+import com.winone.ftc.mentity.mbean.entity.Task;
 
 /**
  * Created by Administrator on 2017/5/8.

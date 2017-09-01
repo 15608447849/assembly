@@ -8,14 +8,11 @@ import java.nio.channels.AsynchronousSocketChannel;
  * Created by user on 2017/7/8.
  */
 public interface SocketImp {
-
-
     /**
      * 获取socket
      * @return
      */
      AsynchronousSocketChannel getSocket();
-
     /**
      * 是否存活
      * @return
@@ -41,4 +38,7 @@ public interface SocketImp {
 
     Session getSession();
     Op getOp();
+
+    /**如果是服务器端, 获取服务器*/
+    SockServer getServer();
 }

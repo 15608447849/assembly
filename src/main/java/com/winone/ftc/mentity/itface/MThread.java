@@ -12,34 +12,44 @@ import java.util.concurrent.locks.ReentrantLock;
  * 任务线程运行
  */
 public class MThread extends Thread{
-
-    private final LinkedBlockingQueue<MRun> runQueue ;
-
+    private final LinkedBlockingQueue<MRun> runQueue;
+    private long dleTime = System.currentTimeMillis();
+    private final int storeLimit ;
     public MThread(String name,int storeLimit) {
-        super(name);
-        this.setDaemon(true);
-        this.setPriority(10);
+        setName(name);
+        this.storeLimit = storeLimit;
         runQueue = new LinkedBlockingQueue(storeLimit);
+        setPriority(10);
     }
-
     //是否运行
     private volatile boolean isRunning = false;
+    //是个工作
+    private boolean isWork = false;
     /**
     * 运行
     * */
-    public void  play(){
-        if (isRunning) return;
-        isRunning = true;
-        start();
+    public MThread  play(){
+        if (!isRunning){
+            isRunning = true;
+            start();
+        }
+      return this;
+    }
+    public boolean isAction(){
+        return isRunning;
     }
     /**
-     * 结束
+     * 是否可结束
      */
-    public void over(){
+    public boolean over(){
         if (isRunning){
-            while (runQueue.size()!=0);
+            if  (!runQueue.isEmpty()){
+                return false;
+            }
             isRunning = false;
+            interrupt();//强制中断堵塞
         }
+        return true;
     }
     /**
      * 如果队列存在元素,取出元素执行
@@ -49,11 +59,19 @@ public class MThread extends Thread{
         MRun running;
         while (isRunning){
             try {
+
                 running = getExecuteRunning();
                 if (running == null) continue;
-                running.onRunning();
+                isWork = true;
+                try {
+                    running.onRunning();
+                } catch (Exception e) {
+                    Log.w(getName()+" >> "+ e);
+                }
+                isWork = false;
+                dleTime = System.currentTimeMillis();
             } catch (Exception e) {
-                Log.e("下载线程错误: "+ e);
+                e.printStackTrace();
             }
         }
     }
@@ -64,8 +82,8 @@ public class MThread extends Thread{
      */
     public MRun addRunning(MRun running){
             if (!isRunning) return running;
+            if (storeLimit == 1 && isWork) return running;
             if (runQueue.offer (running)){
-//                Log.i(this+ " 添加成功:"+ running);
                 return null;
             }
             return running;
@@ -85,10 +103,12 @@ public class MThread extends Thread{
         try {
             return runQueue.take();
         } catch (InterruptedException e) {
-            e.printStackTrace();
         }
         return null;
     }
 
-
+    //返回线程空闲时间
+    public long getDleTime(){
+        return isWork?0L:(System.currentTimeMillis() - dleTime);
+    }
 }

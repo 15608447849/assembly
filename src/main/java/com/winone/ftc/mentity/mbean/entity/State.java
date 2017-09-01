@@ -1,6 +1,6 @@
-package com.winone.ftc.mentity.mbean;
+package com.winone.ftc.mentity.mbean.entity;
 
-import com.winone.ftc.mtools.Log;
+import com.winone.ftc.mhttp.itface.ContrailThread;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -34,7 +34,7 @@ public class State{
     private String result;
     private boolean isRecord = false;
 
-    private long forTime = -1L;//总耗时
+    private long forTime = System.currentTimeMillis();//总耗时,初始化当前时间
     private long preCurSize = 0L;//上一次大小
     private long recordSecSize;
     protected State(Task task) {
@@ -152,20 +152,6 @@ public class State{
         this.threadList = threadList;
     }
 
-    public synchronized void removeThreadList(ContrailThread thread){
-        if (thread==null || threadList==null){
-            return;
-        }
-        Iterator<ContrailThread> itr = threadList.iterator();
-        ContrailThread t;
-        if (itr.hasNext()){
-            t = itr.next();
-            if (thread.equals(t)){
-                t.mStop();
-                itr.remove();
-            }
-        }
-    }
     public synchronized void removeThreadListAll(){
         if (threadList==null){
             return;
@@ -174,7 +160,7 @@ public class State{
         ContrailThread t;
         if (itr.hasNext()){
             t = itr.next();
-            while (t.isWork());
+            //while (t.isWork());
             t.mStop();
             itr.remove();
         }
@@ -191,11 +177,7 @@ public class State{
         return forTime;
     }
     public void setForTime(long forTime){
-        if (forTime<0){
-            this.forTime = forTime;
-        }else{
            this.forTime =  forTime - this.forTime;
-        }
     }
 
     public void setPreCurSizeByTime(int sec){
@@ -226,13 +208,15 @@ public class State{
 
         if (totalSize>0){
             stringBuffer.append("; totalSize: "+totalSize);
+        }else{
+            stringBuffer.append("; totalSize: "+totalSize);
         }
         if (currentSize>0 && totalSize>0){
-            stringBuffer.append("; percent: "+  String.format("%.2f", getProgressPercent()) + "%");
+            stringBuffer.append("; percent: " +  String.format("%.2f", getProgressPercent()) + "%");
         }
 
         if (state==1){
-            stringBuffer.append("; time: "+ new SimpleDateFormat("[yyyy-MM-dd HH:mm:ss:ms]").format(new Date(forTime)) );
+            stringBuffer.append("; time: "+String.format("%.2f", ((double)forTime/1000)) + "s");//new SimpleDateFormat("[yyyy-MM-dd HH:mm:ss:ms]").format(new Date())
         }else{
             if (recordSecSize>0){
                 stringBuffer.append("; progress: "+  String.format("%d Kb/s", recordSecSize));

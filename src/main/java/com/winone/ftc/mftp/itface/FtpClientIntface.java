@@ -1,6 +1,6 @@
 package com.winone.ftc.mftp.itface;
 
-import com.winone.ftc.mentity.mbean.FtpInfo;
+import com.winone.ftc.mentity.mbean.entity.FtpInfo;
 import it.sauronsoftware.ftp4j.FTPDataTransferListener;
 
 import java.io.File;

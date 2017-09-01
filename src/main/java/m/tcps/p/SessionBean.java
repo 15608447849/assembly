@@ -108,12 +108,15 @@ public class SessionBean {
     }
 
     public void close() {
-        //清理数据
-        clearData();
-        if (bufferSoftReference!=null){
-            if (bufferSoftReference.get()!=null){
-                MyBufferPool.get().clear(bufferSoftReference.get());
+        try {
+            //清理数据
+            clearData();
+            if (bufferSoftReference!=null){
+                if (bufferSoftReference.get()!=null){
+                    MyBufferPool.get().clear(bufferSoftReference.get());
+                }
             }
+        } catch (Exception e) {
         }
     }
 }

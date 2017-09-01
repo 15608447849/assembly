@@ -20,6 +20,7 @@ import java.util.List;
 public class NetworkUtil {
 
     public static boolean ping(String address){
+
         if (address==null || "".equals(address)) return false;
         boolean connect = false;
         Runtime runtime = Runtime.getRuntime();
@@ -34,7 +35,7 @@ public class NetworkUtil {
                 sb.append(line+"\n");
             }
             br.close();
-            Log.i("ping "+address+"  result:",sb.toString());
+            Log.i(sb.toString());
             if (!sb.toString().equals("")) {
                 line = "";
                 if (sb.toString().indexOf("TTL") > 0) {

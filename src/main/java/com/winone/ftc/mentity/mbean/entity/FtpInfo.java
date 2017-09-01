@@ -1,6 +1,4 @@
-package com.winone.ftc.mentity.mbean;
-
-import java.io.Serializable;
+package com.winone.ftc.mentity.mbean.entity;
 
 /**
  * Created by lzp on 2017/5/8.

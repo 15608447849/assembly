@@ -2,7 +2,7 @@ package com.winone.ftc.mcore.imps;
 
 import com.winone.ftc.mcore.itface.Manager;
 import com.winone.ftc.mentity.itface.Mftcs;
-import com.winone.ftc.mentity.mbean.Task;
+import com.winone.ftc.mentity.mbean.entity.Task;
 import com.winone.ftc.mtools.ClazzUtil;
 import com.winone.ftc.mtools.StringUtil;
 
@@ -82,10 +82,4 @@ public class ManagerControl implements Mftcs{
         }
         return null;
     }
-
-
-
-
-
-
 }

@@ -4,6 +4,7 @@ import com.winone.ftc.mtools.Log;
 import m.tcps.p.*;
 
 import java.io.IOException;
+import java.net.StandardSocketOptions;
 import java.nio.channels.AsynchronousSocketChannel;
 
 /**
@@ -39,7 +40,6 @@ public class ClientConnect implements SocketImp{
         return this;
     }
     public ClientConnect initial(){
-
         server.add(this);
         session = new ClientSession(this);
         cAction.connectSucceed(session);
@@ -64,19 +64,18 @@ public class ClientConnect implements SocketImp{
                 socket.shutdownOutput();
                 socket.close();
             }
-            Log.i("关闭: "+ this+" "+ socket);
+            cAction.connectClosed(session);
         } catch (IOException e) {
             e.printStackTrace();
         }finally {
-            socket = null;
-            session = null;
-            server = null;
+//            socket = null;
+//            session = null;
+//            server = null;
         }
     }
 
     @Override
     public void ConnectError(Throwable throwable) {
-        throwable.printStackTrace();
         //一个客户端 连接异常
         close();
     }
@@ -92,8 +91,8 @@ public class ClientConnect implements SocketImp{
         return null;
     }
 
-
-    public FtcSocketServer getServer() {
+    @Override
+    public SockServer getServer() {
         return server;
     }
     public CommunicationAction getCommunicationAction() {

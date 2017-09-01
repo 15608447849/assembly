@@ -1,6 +1,4 @@
-package com.winone.ftc.mentity.mbean;
-
-import com.winone.ftc.mtools.Log;
+package com.winone.ftc.mhttp.itface;
 
 import java.util.concurrent.CountDownLatch;
 
@@ -11,8 +9,10 @@ import java.util.concurrent.CountDownLatch;
 public class ContrailThread extends Thread {
 
     private onAction onAction;
-    CountDownLatch cdl;
+    private CountDownLatch cdl;
     public ContrailThread(ContrailThread.onAction onAction,CountDownLatch cdl) {
+        this.setName("HTTP_CT_"+getId());
+        this.setPriority(6);
         this.onAction = onAction;
         this.cdl = cdl;
         onAction.build(this);

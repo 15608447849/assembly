@@ -1,11 +1,15 @@
-package com.winone.ftc.mentity.mbean;
+package com.winone.ftc.mentity.mbean.singer;
 
 import com.winone.ftc.mcore.imps.ManagerImp;
+import com.winone.ftc.mentity.mbean.entity.Task;
+import com.winone.ftc.mentity.mbean.entity.TaskFactory;
 import com.winone.ftc.mtools.FileUtil;
+import com.winone.ftc.mtools.Log;
 import com.winone.ftc.mtools.StringUtil;
 import com.winone.ftc.mtools.TaskUtils;
 
 import java.io.File;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
@@ -14,19 +18,28 @@ import java.util.concurrent.locks.ReentrantLock;
  * Created by lzp on 2017/5/8.
  *  保存 当前正在下载中的任务 - 信息
  */
-public class StateList extends Thread{
+public class StateInfoStorage extends Thread{
 
     private static final String TAG = "保存下载中信息";
     private static final String FTC_DOWN_LIST = "ftc";
+    private long TIME = 6*60*60*1000L;
     private ReentrantLock lock = new ReentrantLock();
     private String systemPath ;
     private File dir;
-    private ManagerImp manage;
     private boolean isRecode = false;//默认不记录 - 请手动开启
-    public StateList(ManagerImp manage) {
-        //取得根目录路径
-        this.manage = manage;
+    private final int LOOP_TIME = 1000 * 60 * 10; //10分钟;
+
+    private StateInfoStorage() {
+        setName("FTC@StorageTaskInfo");
+        setDaemon(true);
         start();
+    }
+
+    private static class  Holder{
+        private static StateInfoStorage storage = new StateInfoStorage();
+    }
+    public static StateInfoStorage get(){
+        return Holder.storage;
     }
 
     private void createDirs() {
@@ -44,6 +57,7 @@ public class StateList extends Thread{
 
         try{
             lock.lock();
+            if (task.getState() != Task.State.NEW) return;
             if (isRecode){
                 createDirs();
                 //获取文件下所有文件的文件名 - 是否存在和这个任务相同的文件
@@ -68,15 +82,10 @@ public class StateList extends Thread{
             if (!isRecode) return;
             createDirs();
             File[] array = dir.listFiles();
-            File f = null;
             for (File file : array){
                 if (file.getName().equals(String.valueOf(task.getTid()))) {
-                    f = file;
-                    break;
+                    file.delete();
                 }
-            }
-            if (f!=null){
-                f.delete();
             }
         }finally {
             lock.unlock();
@@ -94,14 +103,14 @@ public class StateList extends Thread{
                 map.put("tmp",task.getTmpfile());
                 map.put("type",String.valueOf(task.getType()));//类型
                 //本地文件路径
-                map.put("localPath",task.getLocalPath());//local path - file
+                map.put("localPath",TaskUtils.filterPath(task.getLocalPath()));//local path - file
                 map.put("localFileName",task.getLocalFileName());
                 //http
                 map.put("httpType",task.getHttpType());// http type
                 map.put("isMumThread",String.valueOf(task.isMumThread()));//是否多线程下载
                 map.put("maxThread",String.valueOf(task.getMaxThread())); //多线程数量
                 //远程文件路径
-                map.put("remotePath",task.getRemotePath());
+                map.put("remotePath",TaskUtils.filterPath(task.getRemotePath()));
                 map.put("remoteFileName",task.getRemoteFileName());
                 //是否覆盖
                 map.put("cover",String.valueOf(task.isCover()));//是否覆盖
@@ -117,7 +126,7 @@ public class StateList extends Thread{
     public void run() {
         while (true){
             try {
-               sleep(1000 * 60);
+               sleep(LOOP_TIME);
             } catch (InterruptedException e) {
             }
             checkTask();
@@ -130,45 +139,34 @@ public class StateList extends Thread{
 
         try{
             lock.lock();
-            if (manage == null || !isRecode) return;
+            if (!isRecode) return;
             createDirs();
             //查询 任务列表
             File[] files = dir.listFiles();
             if (files.length>0){
-                long taskTid;
+
                 Map<String,String> map;
                 String configPath;
                 String uri;
 
                 for (int i = 0; i < files.length;i++){
-
                    map =  FileUtil.readFileToMap(files[0].getAbsolutePath());
                     if (map!=null){
-
-                        try{
-                            taskTid = Long.parseLong(files[i].getName());
-                        }catch (NumberFormatException ex){
-                            continue;
+                        //还原一个任务
+                        Task task = restore(map);
+                        //查看是否存在config文件
+                        if (FileUtil.checkFileNotCreate(TaskUtils.getConfigFile(task))){
+                            //获取文件最后修改时间
+                            if (( System.currentTimeMillis() -  (new File(TaskUtils.getConfigFile(task)).lastModified()) )< TIME){
+                             continue;
+                            }
                         }
-                        uri = map.get("uri");
-                        configPath = map.get("config");
-                        //去进行中的任务队列查询是否存在 (tid+url)
-                        if (StringUtil.isEntry(uri) || StringUtil.isEntry(configPath)) continue;
-                        //添加任务
-                        //删除此文件
-                        Task task = sendTask(map);
-                        if (task!=null){
-                            FileUtil.deleteFile(files[i].getAbsolutePath());
-                            Task.Type type = task.getType();
-                            //正在下载中的任务
-                            if (type.equals(Task.Type.FTP_DOWN) || type.equals(Task.Type.HTTP_DOWN)){
-                                manage.load(task);
-                            }
-                            if (type.equals(Task.Type.FTP_UP) || type.equals(Task.Type.HTTP_UP)){
-                                manage.upload(task);
-                            }
+                        if (files[i].delete()){
+                            //执行任务
+                            ManagerImp.get().execute(task);
                         }
                     }
+
                 }
             }
         }finally {
@@ -176,33 +174,35 @@ public class StateList extends Thread{
         }
     }
 
-    private Task sendTask(Map<String, String> map) {
-        Task task = new Task();
-        task.setState(Task.State.NEW);
-        task.setTid(Long.parseLong(map.get("tid")));
-        task.setUri(map.get("uri"));
+    private Task restore(Map<String, String> map) {
 
-        task.setHttpType(map.get("httpType"));
-        task.setLocalPath(map.get("localPath"));
-        task.setLocalFileName(map.get("localFileName"));
-        task.setRemotePath(map.get("remotePath"));
-        task.setRemoteFileName("remoteFileName");
-        task.setMumThread(Boolean.parseBoolean(map.get("isMumThread")));
-        task.setCover(Boolean.parseBoolean(map.get("cover")));
-        task.setMaxThread(Integer.parseInt(map.get("maxThread")));
-        task.setParams(StringUtil.string2map(map.get("params")));
-        task.setText(Boolean.parseBoolean(map.get("isText")));
-        task.setTmpfile(map.get("tmp"));
-        task.setDconfig(task.getLocalFileName()+TaskFactory.CONF);
-        Task.Type type = Task.Type.valueOf(map.get("type"));
-        task.setType(type);
-        if (type.equals(Task.Type.FTP_DOWN) || type.equals(Task.Type.FTP_UP)){
-            task.setFtpInfo(TaskFactory.getFtpInfo(TaskFactory.parseFtpUrl(task.getUri())));
+        try {
+            Task task = new Task();
+            task.setState(Task.State.NEW);
+            task.setTid(Long.parseLong(map.get("tid")));
+            task.setUri(map.get("uri"));
+            task.setHttpType(map.get("httpType"));
+            task.setLocalPath(map.get("localPath"));
+            task.setLocalFileName(map.get("localFileName"));
+            task.setRemotePath(map.get("remotePath"));
+            task.setRemoteFileName("remoteFileName");
+            task.setMumThread(Boolean.parseBoolean(map.get("isMumThread")));
+            task.setCover(Boolean.parseBoolean(map.get("cover")));
+            task.setMaxThread(Integer.parseInt(map.get("maxThread")));
+            task.setParams(StringUtil.string2map(map.get("params")));
+            task.setText(Boolean.parseBoolean(map.get("isText")));
+            task.setTmpfile(map.get("tmp"));
+            task.setDconfig(task.getLocalFileName()+ TaskFactory.CONF);
+            Task.Type type = Task.Type.valueOf(map.get("type"));
+            task.setType(type);
+            if (type.equals(Task.Type.FTP_DOWN) || type.equals(Task.Type.FTP_UP)){
+                task.setFtpInfo(TaskFactory.getFtpInfo(TaskFactory.parseFtpUrl(task.getUri())));
+            }
+            return task;
+        } catch (Exception e) {
         }
-        if (manage.getCurrentTaskQueue().isExistTask(task)) return null;//如果存在任务 - 取消
-        return task;
+        return null;
     }
-
 
     public void setRecode(boolean recode) {
         this.isRecode = recode;

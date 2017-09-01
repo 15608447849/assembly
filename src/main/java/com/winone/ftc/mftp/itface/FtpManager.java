@@ -1,6 +1,6 @@
 package com.winone.ftc.mftp.itface;
 
-import com.winone.ftc.mentity.mbean.FtpInfo;
+import com.winone.ftc.mentity.mbean.entity.FtpInfo;
 
 /**
  * Created by lzp on 2017/5/11.

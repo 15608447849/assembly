@@ -3,12 +3,14 @@ package com.winone.ftc.mcore.imps;
 
 import com.winone.ftc.mcore.itface.Manager;
 import com.winone.ftc.mentity.itface.MRun;
-import com.winone.ftc.mentity.mbean.*;
+import com.winone.ftc.mentity.mbean.entity.ManagerParams;
+import com.winone.ftc.mentity.mbean.entity.State;
+import com.winone.ftc.mentity.mbean.entity.Task;
+import com.winone.ftc.mentity.mbean.singer.*;
 import com.winone.ftc.mtools.*;
 import m.tcps.c.FtcSocketClient;
 import m.tcps.s.FtcSocketServer;
 
-import java.io.IOException;
 import java.util.Iterator;
 import java.util.List;
 
@@ -19,14 +21,37 @@ import java.util.List;
 public class ManagerImp implements Manager {
     private static final String TAG = "下载管理器";
     private static final String HOST = "www.baidu.com";
-    private ManagerImp(){
 
+    // http loader 实现
+    private ManagerControl http;
+    //ftp 实现
+    private ManagerControl ftp;
+    //是否检测网络状态
+    private boolean isCheckNetWork = false;
+
+    //线程执行池
+    private final MThreadManage threadManage;
+    // 存储当前运行中的任务 用于查询状态
+    private final StateInfoStorage stateList;
+    //运行中的任务
+    private final DownloadTaskQueue runQueue;
+    //等待执行的任务
+    private final DownloadWaitTaskQueue waitQueue;
+    //下载上传状态更新
+    private final StateNotification stateNotification;
+
+    private ManagerImp(){
+        threadManage = MThreadManage.get();
+        stateList = StateInfoStorage.get();
+        runQueue = DownloadTaskQueue.get();
+        waitQueue = DownloadWaitTaskQueue.get();
+        stateNotification = StateNotification.getInstant();
+        runQueue.setLimit(threadManage.getCountMax());
     }
 
     public DownloadTaskQueue getCurrentTaskQueue() {
         return runQueue;
     }
-
 
     private static class InstantHolder{
         private static ManagerImp instant  = new ManagerImp();
@@ -35,37 +60,15 @@ public class ManagerImp implements Manager {
         return InstantHolder.instant;
     }
 
-    //线程执行
-    private final MThreadManage threadManage = new MThreadManage();
-    //运行中的任务
-    private DownloadTaskQueue runQueue = new DownloadTaskQueue(threadManage.getCount());
-    // 存储当前运行中的任务 用于查询状态
-    private StateList stateList = new StateList(this);
-    //等待执行的任务
-    private DownloadWaitTaskQueue waitQueue = new DownloadWaitTaskQueue(this,threadManage.getCount());
-    // http loader 实现
-    private ManagerControl http;
-    //ftp 实现
-    private ManagerControl ftp;
-    private boolean isCheckNetWork = false;
-
-    //tcp socket server 实现
-    private FtcSocketServer socketServer;
-    //tcp client
-    private FtcSocketClient socketClient;
-
-
     //初始化参数
     public void initial(ManagerParams params) {
-        if (params == null) return;
-        stateList.setRecode(params.isRecode());
-        Log.setPrint(params.isPrintf());
-
-        int count = threadManage.setCount(params.getRuntimeThreadMax());
-        runQueue.setLimit(count);
-        waitQueue.setLimit(count);
-        isCheckNetWork = params.isCheckNetwork();
-        if (params.getLogPath()!=null) Log.LOG_FILE_PATH = params.getLogPath();
+        if (params != null) {
+            if (!StringUtil.isEntry(params.getLogPath())) Log.LOG_FILE_PATH = params.getLogPath();
+            Log.setPrint(params.isPrintf());
+            stateList.setRecode(params.isRecode());
+            runQueue.setLimit(threadManage.setSimultaneously(params.getRuntimeThreadMax()).getCountMax());
+            isCheckNetWork = params.isCheckNetwork();
+        }
     }
     private void createFTP(){
         if (ftp==null){
@@ -89,11 +92,10 @@ public class ManagerImp implements Manager {
             }
         }
         if (task!=null && runnable!=null){
-//            Log.i("准备添加: "+ task);
+//            Log.i("传输管理器,执行中任务 : "+ task.getTid()+" , "+ task.getUri());
             if (runQueue.addTaskRunning(task,runnable)){
                 stateList.addSateFile(task);
             }else{
-//                Log.i("添加失败,进入等待 > : "+ task);
                 waitQueue.addTask(task,runnable);
             }
             return task;
@@ -106,13 +108,13 @@ public class ManagerImp implements Manager {
     }
     @Override
     public int getCurrentTaskSize() {
-        return runQueue.size() + waitQueue.size();
+        return runQueue.getSize() + waitQueue.getSize();
     }
     @Override
     public Task load(Task task) {
 
         if (task==null) return null;
-        Log.i(" 下载添加:"+ task.getTid()+" ["+task.getUri()+"]");
+        Log.i(" 传输管理器@下载: "+ task.getTid()+" , "+task.getUri());
         if (!FileUtil.checkDir(task.getLocalPath())) return null;
 
         if (task.getType() == Task.Type.HTTP_DOWN){
@@ -124,7 +126,6 @@ public class ManagerImp implements Manager {
         if (task.getType() == Task.Type.FTP_DOWN){
             createFTP();
             if (ftp!=null){
-
                 return executeTask(ftp.load(task));
             }
         }
@@ -135,7 +136,7 @@ public class ManagerImp implements Manager {
     public Task upload(Task task) {
 
         if (task==null) return null;
-        Log.i(" 上传添加:"+ task.getTid()+" ["+task.getUri()+"]");
+        Log.i(" 传输管理器@上传: "+ task.getTid()+" , "+task.getUri());
         if (task.getType() == Task.Type.HTTP_UP){
             createHTTP();
             if (http!=null){
@@ -160,15 +161,15 @@ public class ManagerImp implements Manager {
     }
 
 
-    public void execute(Task task){
-        if (task == null) return;
+    public void execute(final Task task){
 
-        if (task!=null && (task.getType() == Task.Type.HTTP_DOWN || task.getType() == Task.Type.FTP_DOWN)){
-             load(task);
-        }
-        if (task!=null && (task.getType() == Task.Type.HTTP_UP || task.getType()== Task.Type.FTP_UP)){
-            upload(task);
-        }
+        if (task == null) return;
+                if (task!=null && (task.getType() == Task.Type.HTTP_DOWN || task.getType() == Task.Type.FTP_DOWN)){
+                    load(task);
+                }
+                if (task!=null && (task.getType() == Task.Type.HTTP_UP || task.getType()== Task.Type.FTP_UP)){
+                    upload(task);
+                }
     }
 
     @Override
@@ -178,12 +179,7 @@ public class ManagerImp implements Manager {
                 MRun runnable = runQueue.getRunning(task);
                     if (runnable != null && task.getState() == Task.State.NEW) {
                         task.setState(Task.State.RUNNING);
-
-                        try {
-                            Thread.sleep(150);
-                        } catch (InterruptedException e) {
-                        }
-                        threadManage.addMRun(runnable,0);
+                        threadManage.launchTask(task,runnable);
                       }
                 return task;
             }
@@ -199,10 +195,7 @@ public class ManagerImp implements Manager {
     @Override
     public void removeTask(Task task) {
         if (task==null) return;
-        try {
-            Thread.sleep(100);
-        } catch (InterruptedException e) {
-        }
+        task.setState(Task.State.FINISH);//设置任务状态 -> 完成!
         State state = task.getExistState();
         if (state==null){
             execute(task);
@@ -212,11 +205,15 @@ public class ManagerImp implements Manager {
             execute(task);
             return;
         }
+        //下载队列中移除
+        if (runQueue.removeRunning(task)!=null){
+            //从记录文件夹中移除
+            stateList.removeStateFile(task);
+        }
+        //从通知更新中移除
+        stateNotification.removeState(task.getExistState());
 
-        StateNotifyList.getInstant().removeState(task.getExistState());
-        runQueue.removeRunning(task);
-        stateList.removeStateFile(task);
-        Log.w("完成: "+ task.getUri());
+        Log.i("传输管理器@结束任务: "+task.toString() +"\n   >>"+ task.getExistState());
     }
     /**
      * 队列任务

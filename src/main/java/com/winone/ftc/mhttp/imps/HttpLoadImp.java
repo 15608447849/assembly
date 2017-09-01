@@ -2,9 +2,10 @@ package com.winone.ftc.mhttp.imps;
 
 import com.winone.ftc.mcore.itface.Excute;
 import com.winone.ftc.mentity.itface.Mftcs;
-import com.winone.ftc.mentity.mbean.ContrailThread;
-import com.winone.ftc.mentity.mbean.State;
-import com.winone.ftc.mentity.mbean.Task;
+import com.winone.ftc.mhttp.itface.ContrailThread;
+import com.winone.ftc.mentity.mbean.entity.State;
+import com.winone.ftc.mentity.mbean.entity.Task;
+import com.winone.ftc.mtools.Log;
 import com.winone.ftc.mtools.TaskUtils;
 import com.winone.ftc.mtools.FileUtil;
 
@@ -21,12 +22,11 @@ import java.util.concurrent.CountDownLatch;
  * load imps
  */
 public class HttpLoadImp extends Excute{
-    private static final  long limit_10M = (1024L  * 1024 * 10); //10M
     private static final  long limit_150M = (1024L  * 1024 * 150); //150M
     private static final  long limit_700M = (1024L  * 1024 * 700); //700M
     private static final long limit_2G = (1024L  * 1024 * 1024 * 2); //2G
     private static final long limit_5G = (1024L  * 1024 * 1024 * 5);
-    private static final  long limit_8G = (1024L  * 1024 * 1024 * 8);
+
     public HttpLoadImp(Mftcs manager) {
         super(manager);
     }
@@ -34,6 +34,8 @@ public class HttpLoadImp extends Excute{
     //获取文件大小
     public long getRemoteFileSize(Task task,int tag,boolean failTry) {
         long fileLength = -1;
+        tag++;
+
         HttpURLConnection httpURLConnection = null;
         try {
             httpURLConnection = (HttpURLConnection) new URL(task.getUri()).openConnection();
@@ -43,7 +45,7 @@ public class HttpLoadImp extends Excute{
             }else{
                 httpURLConnection .setRequestMethod("HEAD");
             }
-            httpURLConnection.setRequestProperty("Connetion", "Close");//close
+            httpURLConnection.setRequestProperty("Connection", "Close");//close
             httpURLConnection.setRequestProperty("Charset", "UTF-8");
             httpURLConnection.setRequestProperty("Content-type", "application/octet-stream");
             httpURLConnection.setRequestProperty("Range", "bytes=" +0 + "-");
@@ -53,32 +55,26 @@ public class HttpLoadImp extends Excute{
             httpURLConnection.setDefaultUseCaches(false);
             httpURLConnection.setDoInput(true);
             httpURLConnection.setDoOutput(true);
-            httpURLConnection.setConnectTimeout(20*1000); //连接超时
-            httpURLConnection.setReadTimeout(30*1000);//读取超时
+            httpURLConnection.setConnectTimeout(10*1000); //连接超时
+            httpURLConnection.setReadTimeout(10*1000);//读取超时
             httpURLConnection.connect();
             int code = httpURLConnection.getResponseCode();
-            if( code == 200 || code == 206){
+            if( code == 206 || code == 200){
                 fileLength = httpURLConnection.getContentLength();
-                if (fileLength<0) fileLength=httpURLConnection.getContentLengthLong();
+                if (fileLength<=0) fileLength=httpURLConnection.getContentLengthLong();
                 if (code == 206){
                     task.setMaxThread(1);
-                    if (fileLength>=limit_10M){
-                        task.setMaxThread(2);
-                    }
                    if (fileLength >=limit_150M){
-                       task.setMaxThread(3);
+                       task.setMaxThread(2);
                    }
                     if (fileLength >=limit_700M){
-                        task.setMaxThread(4);
+                        task.setMaxThread(3);
                     }
                     if (fileLength >=limit_2G){ // 2G
-                        task.setMaxThread(8);
+                        task.setMaxThread(4);
                     }
                     if (fileLength >= limit_5G){ //5G
-                        task.setMaxThread(16);
-                    }
-                    if (fileLength >= limit_8G){ //5G
-                        task.setMaxThread(32);
+                        task.setMaxThread(5);
                     }
                     task.setMumThread(true);
                 }
@@ -88,6 +84,7 @@ public class HttpLoadImp extends Excute{
                 if (failTry){
                     //尝试下载
                     State state = task.getExistState();
+                    state.setResult("100");
                     state.setRecord(true);
                     InputStream inputStream = null;
                     OutputStream fileOutputStream  = null;
@@ -95,26 +92,31 @@ public class HttpLoadImp extends Excute{
                         inputStream = httpURLConnection.getInputStream();
                         fileOutputStream = new FileOutputStream(TaskUtils.getLocalFile(task));
                         int index;
-                        byte[] b = new byte[1024];
+                        byte[] b = new byte[1024*2];
                         while ( (index=inputStream.read(b)) >0){
                             fileOutputStream.write(b,0,index);
                             state.setCurrentSize(state.getCurrentSize() + index);
                         }
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                        state.setResult("200");
+                    } catch (Exception e) {
+                        state.setResult(state.getResult()+"\n"+e.toString());
                     }finally {
                         FileUtil.closeStream(inputStream,fileOutputStream,null,httpURLConnection);
                     }
-                    state.setError(" 获取文件大小:"+ fileLength+", 尝试下载完成.未检测结果是否正确.");
-                    state.setResult("200");
+                    state.setError("获取文件大小:"+ fileLength+", 尝试下载完成.未检测结果是否正确.");
+                    fileLength = -2;
                 }else{
-                    if (fileLength<0 && code==200 || code==206){
+                    if (fileLength<=0 && (code==200 || code==206)){
                         return getRemoteFileSize(task,tag,true);
                     }
                 }
                 // Log.i(uri+" ,返回值:"+ code+" , 文件大小:"+ fileLength+" byte. 是否可以多线程下载 : "+ task.isMumThread()+ (task.isMumThread()?",最大线程数:"+task.getMaxThread():""));
 
-            }else{
+            }else if (code==-1) {
+                return getRemoteFileSize(task,tag,failTry);
+            }
+            else
+            {
                 throw new Exception( task.getUri() +" http response code: "+ code);
             }
 
@@ -124,12 +126,11 @@ public class HttpLoadImp extends Excute{
                     Thread.sleep(5 * 1000);
                 } catch (InterruptedException e1) {
                 }
-//                Log.i("UnknownHostException : "+ uri+" 当前重试次数: "+ (++tag) );
                 if (tag<10){
                     return getRemoteFileSize(task,tag,failTry);
                 }
             }
-            task.getExistState().setError("远程文件错误:\n "+ e.getClass().getSimpleName()+" - "+ e.getCause()+" "+ e.getMessage()+" * "+ e);
+            task.getExistState().setError("远程文件错误:\n "+ e.toString());
 
         }finally {
             if (httpURLConnection!=null){
@@ -146,13 +147,19 @@ public class HttpLoadImp extends Excute{
     public Task load(Task task) {
 
         State state = task.getProgressStateAndAddNotify();
-        //获取文件大小
+        //获取文件大小 -2>不检测
         long remoteFileSize = getRemoteFileSize(task,0,task.isDirectDown());
+
         state.setTotalSize(remoteFileSize); //设置文件总大小
         if (remoteFileSize<=0){
+
             state.setState(-1);
             state.setError(task.getUri()+" -> "+ state.getError());
             state.setRecord(true);
+            if (remoteFileSize==-2 && state.getResult().equals("200")) {
+                task.setCover(false);//避免临时文件覆盖
+                state.setState(1); //成功
+            }
             finish(task);
             return null;
         }
@@ -295,14 +302,12 @@ public class HttpLoadImp extends Excute{
                 Thread.sleep(100);
             } catch (InterruptedException e) {
             }
-            //再次检测文件完整性
-            if (FileUtil.checkFileLength(TaskUtils.getLocalFile(task),state.getTotalSize())){
-                state.setState(1);
-            }else if (FileUtil.checkFileLength(TaskUtils.getTmpFile(task),state.getTotalSize())){
-                state.setState(1);
-            }else{
-                state.setState(-1);
-                state.setError("检测文件长度一致性错误.");
+            //再次检测文件完整性 检测本地文件大小,不存在检测临时文件大小
+            if (!FileUtil.checkFileLength(TaskUtils.getLocalFile(task),state.getTotalSize())){
+               if (!FileUtil.checkFileLength(TaskUtils.getTmpFile(task),state.getTotalSize())){
+                    state.setState(1);
+                    state.setError("检测文件长度错误,大小不正确或文件不存在.");
+                }
             }
         }
         finish(task);//任务完成

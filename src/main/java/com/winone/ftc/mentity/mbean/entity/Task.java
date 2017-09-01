@@ -1,5 +1,7 @@
-package com.winone.ftc.mentity.mbean;
+package com.winone.ftc.mentity.mbean.entity;
 
+import com.winone.ftc.mentity.mbean.singer.StateNotification;
+import com.winone.ftc.mtools.Log;
 import com.winone.ftc.mtools.StringUtil;
 import com.winone.ftc.mtools.TaskUtils;
 
@@ -11,6 +13,7 @@ import java.util.*;
  *  任务对象
  */
 public class Task {
+
 
 
 
@@ -51,7 +54,7 @@ public class Task {
     //是否直接下载,不检测任何状态和是否覆盖
     private boolean isDirectDown;
     //进度状态
-    private com.winone.ftc.mentity.mbean.State stateing;
+    private com.winone.ftc.mentity.mbean.entity.State stateing;
     private TaskRecord mResult = new TaskRecord();
     //返回记录文件的回调
     public Task.onResult getRecordResult() {
@@ -194,15 +197,12 @@ public class Task {
 
     //外界设置的回调
     public synchronized List<onResult> getOnResultList() {
-        if (resultList.size()==0) return null;
         return resultList;
     }
 
     //外界设置的回调
     public synchronized Task  setOnResult(onResult onResult) {
-        if (!resultList.contains(onResult)){
-            resultList.add(onResult);
-        }
+        resultList.add(onResult);
         return this;
     }
 
@@ -210,18 +210,18 @@ public class Task {
      *
      * @return
      */
-    public com.winone.ftc.mentity.mbean.State getExistState(){
+    public com.winone.ftc.mentity.mbean.entity.State getExistState(){
         return stateing;
     }
     //获取状态值
-    public com.winone.ftc.mentity.mbean.State getProgressState(){
-        if (stateing == null) stateing = new com.winone.ftc.mentity.mbean.State(this);
+    public com.winone.ftc.mentity.mbean.entity.State getProgressState(){
+        if (stateing == null) stateing = new com.winone.ftc.mentity.mbean.entity.State(this);
         return stateing;
     }
     //获取状态值
-    public com.winone.ftc.mentity.mbean.State getProgressStateAndAddNotify(){
-        if (stateing == null) stateing = new com.winone.ftc.mentity.mbean.State(this);
-        StateNotifyList.getInstant().putState(stateing);
+    public com.winone.ftc.mentity.mbean.entity.State getProgressStateAndAddNotify(){
+        if (stateing == null) stateing = new com.winone.ftc.mentity.mbean.entity.State(this);
+        StateNotification.getInstant().putState(stateing);
         return stateing;
     }
 
@@ -265,32 +265,58 @@ public class Task {
         isDirectDown = directDown;
     }
 
+    public void setOtherTaskOnResult(Task otherTask) {
+        try {
+            Iterator<Task.onResult> iterator = otherTask.getOnResultList().iterator();
+            Task.onResult onResult;
+            while (iterator.hasNext()){
+               onResult = iterator.next();
+               iterator.remove();
+               this.setOnResult(onResult);
+            }
+        } catch (Exception e) {
+        }
+    }
+
     @Override
     public String toString() {
         StringBuffer sbff = new StringBuffer();
-            sbff.append("[ id = "+tid);
+            sbff.append("[ id = " + tid);
             sbff.append("; uri = "+uri);
             sbff.append("; type = "+getTypeString());
-            sbff.append("; remote path = "+ TaskUtils.getRemoteFile(this));
-            sbff.append("; local path = "+ TaskUtils.getLocalFile(this));
             sbff.append("; state = "+ getStateString());
-            sbff.append("; config path = "+ dconfig);
-            sbff.append("; tmp path = "+ tmpfile);
+        if (type==Type.FTP_UP || type==Type.HTTP_UP){
+            sbff.append("; remote = "+ TaskUtils.getRemoteFile(this));
+        }
+        if (type==Type.FTP_DOWN || type==Type.HTTP_DOWN){
+            sbff.append("; local = "+ TaskUtils.getLocalFile(this));
+        }
+        if (resultList!=null && resultList.size()>0){
+            sbff.append("; call size = "+ resultList.size());
+        }
             sbff.append(" ]");
         return sbff.toString();
     }
 
-    private boolean isSameTask(String uri,String localPath,String remotePath){
 
-        return  this.uri.equals(uri) &&  TaskUtils.getLocalFile(this).equals(localPath) && TaskUtils.getRemoteFile(this).equals(remotePath);
-    }
 
     @Override
     public boolean equals(Object obj) {
         if (obj !=null && obj instanceof Task){
             Task t = (Task) obj;
+//            if (t.getTid() == getTid()) return true;
+            if (t.getType() == getType()){
 
-            return t.getTid() == this.tid && isSameTask(t.getUri(),TaskUtils.getLocalFile(t),TaskUtils.getRemoteFile(t));
+                if (t.getType() == Type.HTTP_DOWN || t.getType()== Type.FTP_DOWN) {
+                    // 远程url, 比较本地文件路径
+                    return t.getUri().equals(getUri()) &&  TaskUtils.getLocalFile(t).equals(TaskUtils.getLocalFile(this)) ;
+                }
+                else if (t.getType() == Type.HTTP_UP || t.getType()== Type.FTP_UP){
+                    //上传的地址, 本地地址, 比较远程地址
+                    return  t.getUri().equals(getUri()) &&  TaskUtils.getLocalFile(t).equals(TaskUtils.getLocalFile(this)) && TaskUtils.getRemoteFile(t).equals(TaskUtils.getRemoteFile(this));
+                }
+
+            }
         }
         return false;
     }
@@ -302,14 +328,14 @@ public class Task {
 
     //下载结果回调
     public interface onResult{
-        void onSuccess(com.winone.ftc.mentity.mbean.State state);
-        void onFail(com.winone.ftc.mentity.mbean.State state);
-        void onLoading(com.winone.ftc.mentity.mbean.State state);
+        void onSuccess(com.winone.ftc.mentity.mbean.entity.State state);
+        void onFail(com.winone.ftc.mentity.mbean.entity.State state);
+        void onLoading(com.winone.ftc.mentity.mbean.entity.State state);
     }
     public static abstract class onResultAdapter implements onResult{
-        public void onSuccess(com.winone.ftc.mentity.mbean.State state){}
-        public void onFail(com.winone.ftc.mentity.mbean.State state){}
-        public void onLoading(com.winone.ftc.mentity.mbean.State state){}
+        public void onSuccess(com.winone.ftc.mentity.mbean.entity.State state){}
+        public void onFail(com.winone.ftc.mentity.mbean.entity.State state){}
+        public void onLoading(com.winone.ftc.mentity.mbean.entity.State state){}
     }
 
 }

@@ -1,4 +1,4 @@
-package com.winone.ftc.mentity.mbean;
+package com.winone.ftc.mentity.mbean.entity;
 
 import com.winone.ftc.mcore.imps.ManagerImp;
 import com.winone.ftc.mtools.FileUtil;
@@ -40,7 +40,6 @@ public class TaskRecord implements Task.onResult {
     @Override
     public void onFail(State state) {
             Task task = state.getTask();
-
             state.setForTime(System.currentTimeMillis());
             writeStateToFile(state,TaskUtils.getConfigFile(task));//序列化状态
             //通知绑定的回调
@@ -52,7 +51,6 @@ public class TaskRecord implements Task.onResult {
     @Override
     public void onLoading(State state) {
             Task task = state.getTask();
-
             if (state.getForTime()<0){
                 state.setForTime(System.currentTimeMillis());
             }
@@ -110,13 +108,8 @@ public class TaskRecord implements Task.onResult {
     }
 
     private void callBy(Task task,State state){
-        if (task.getOnResultList()!=null){
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    listByCall(task.getOnResultList(),state);
-                }
-            }).start();
+        if (task.getOnResultList().size()>0){
+            new Thread(() -> listByCall(task.getOnResultList(),state)).start();
         }
     }
     private void listByCall(List<Task.onResult> onResultList,State state){
@@ -127,12 +120,12 @@ public class TaskRecord implements Task.onResult {
             if (state.getState() == 0){
                 onResult.onLoading(state);
             }else{
+                iterator.remove();
                 if (state.getState() == 1){
                     onResult.onSuccess(state);
                 }else {
                     onResult.onFail(state);
                 }
-                iterator.remove();
             }
         }
     }

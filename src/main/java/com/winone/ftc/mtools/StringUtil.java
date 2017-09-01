@@ -1,16 +1,5 @@
 package com.winone.ftc.mtools;
 
-import com.winone.ftc.mentity.mbean.Task;
-
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
-import java.nio.charset.CharacterCodingException;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.CharsetEncoder;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -112,9 +101,6 @@ public class StringUtil {
         return encode(uri,false);
     }
 
-
-
-
     public static String map2string(HashMap<String,String> map){
         if (map == null || map.isEmpty()) return "";
         Iterator<Map.Entry<String,String>> iterator = map.entrySet().iterator();
@@ -140,22 +126,26 @@ public class StringUtil {
         return map;
 
     }
-    private static final String IP_PATTERN = "\\d+\\.\\d+\\.\\d+\\.\\d+";
-    private static final String DOMAIN_PATTERN = "[^//]*?\\.(com|cn|net|org|biz|info|cc|tv)[^/]*";
+//    private static final String IP_PATTERN = "\\d+\\.\\d+\\.\\d+\\.\\d+";
+//    private static final String DOMAIN_PATTERN = "[^//]*?\\.(com|cn|net|org|biz|info|cc|tv)[^/]*";
+    private static final String DOMAIN_PATTERN  = "(?<=://)([\\w-]+\\.)+[\\w-]+(?<=/?)";
     public static String matchIpAddress(String url) {
-        Pattern p = Pattern.compile(IP_PATTERN,Pattern.CASE_INSENSITIVE);
-        Matcher m = p.matcher(url);
-        if (m.find()) {
-            return m.group();
-        }
-        p = Pattern.compile(DOMAIN_PATTERN, Pattern.CASE_INSENSITIVE);
-        m = p.matcher(url);
-        if (m.find()) {
-            return m.group();
+        try {
+            if (url.indexOf("@")>0){
+                url = url.substring(url.indexOf("@"),url.length()).replace("@","://");
+            }
+            Pattern p = Pattern.compile(DOMAIN_PATTERN,Pattern.CASE_INSENSITIVE);
+            Matcher m = p.matcher(url);
+            if (m.find()) {
+                return m.group();
+            }
+        } catch (Exception e) {
         }
         return "www.baidu.com";
     }
 
 
-
+    public static String filter(String s) {
+        return s.trim();
+    }
 }

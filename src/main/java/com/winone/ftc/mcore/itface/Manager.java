@@ -2,7 +2,7 @@ package com.winone.ftc.mcore.itface;
 
 import com.winone.ftc.mentity.itface.MRun;
 import com.winone.ftc.mentity.itface.Mftcs;
-import com.winone.ftc.mentity.mbean.Task;
+import com.winone.ftc.mentity.mbean.entity.Task;
 
 /**
  * Created by lzp on 2017/5/8.

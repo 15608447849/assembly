@@ -2,8 +2,8 @@ package com.winone.ftc.mftp.imps;
 
 import com.winone.ftc.mcore.itface.Excute;
 import com.winone.ftc.mentity.itface.Mftcs;
-import com.winone.ftc.mentity.mbean.State;
-import com.winone.ftc.mentity.mbean.Task;
+import com.winone.ftc.mentity.mbean.entity.State;
+import com.winone.ftc.mentity.mbean.entity.Task;
 import com.winone.ftc.mtools.TaskUtils;
 import com.winone.ftc.mftp.ftps.MftpManager;
 import com.winone.ftc.mftp.itface.FtpClientIntface;

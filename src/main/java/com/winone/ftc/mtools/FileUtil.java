@@ -1,8 +1,6 @@
 package com.winone.ftc.mtools;
 
 
-import com.winone.ftc.mentity.mbean.Task;
-
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.nio.ByteBuffer;
@@ -298,6 +296,12 @@ public class FileUtil {
         return false;
     }
 
+    public static boolean checkFileNotCreate(String path) {
+        File file = new File(path);
+        if (file.exists()&& file.isFile()) return true;
+        return false;
+    }
+
     public static boolean writeStringToFile(String content, String pathDir,String fileName,boolean isAppend) {
 
         if (!checkDir(pathDir)) return false;
@@ -306,7 +310,7 @@ public class FileUtil {
             try {
                 file.createNewFile();
             } catch (IOException e) {
-                ;
+                e.printStackTrace();
                 return false;
             }
         }
@@ -323,8 +327,9 @@ public class FileUtil {
     }
 
     public static boolean checkFileLength(String path,long totalSize) {
-        if (checkFile(path)){
-           return new File(path).length() == totalSize;
+        File file = new File(path);
+        if (file.exists() && file.isFile()){
+           return file.length() == totalSize;
         }else{
             return false;
         }

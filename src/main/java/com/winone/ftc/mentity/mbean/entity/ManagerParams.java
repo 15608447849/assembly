@@ -1,4 +1,4 @@
-package com.winone.ftc.mentity.mbean;
+package com.winone.ftc.mentity.mbean.entity;
 
 import m.tcps.p.CommunicationAction;
 
