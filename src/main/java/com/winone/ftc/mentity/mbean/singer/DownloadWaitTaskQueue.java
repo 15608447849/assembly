@@ -59,31 +59,38 @@ public class DownloadWaitTaskQueue extends Thread{
     }
 
     private int getRandomNumber(){
-        return (random.nextInt(20)+1) * 10 ;
+        return (random.nextInt(10)+1) * 10 ;
     }
 
     /**
      * 检测任务
      */
     private void check(){
-        Task task = null;
-        MRun runnable = null;
-        int tag = 0 ;
+        Task[] tasks = null;
+        MRun[] runnables = null;
+
+        int size = 0 ;
         try {
             lock.lock();
 //            Log.w(getName()+ "等待检测.当前数量: "+ maps.size());
             if (maps.size() >0 ){
-                tag = DownloadTaskQueue.get().checkLimit();
-                if (tag>0){
-//                    Log.w(getName()+ " next.");
+                size = DownloadTaskQueue.get().checkLimit();
+                if (size>0){
+                    tasks = new Task[size];
+                    runnables = new MRun[size];
+
                     Iterator<Map.Entry<Task,MRun>> iterator = maps.entrySet().iterator();
                     Map.Entry<Task,MRun> entry ;
-                    if (iterator.hasNext()){
+                    int index = 0;
+                    while (iterator.hasNext()){
+
                         entry = iterator.next();
                         iterator.remove();
 
-                        task = entry.getKey();
-                        runnable = entry.getValue();
+                        tasks[index] = entry.getKey();
+                        runnables[index] = entry.getValue();
+                        index++;
+                        if (size==index) break;
                     }
                 }
 
@@ -91,9 +98,8 @@ public class DownloadWaitTaskQueue extends Thread{
         }finally {
             lock.unlock();
         }
-        ManagerImp.get().executeTask(task,runnable);
-        if (tag>2){
-            check();
+        for (int i = 0; i<size;i++){
+            ManagerImp.get().executeTask(tasks[i],runnables[i]);
         }
     }
     @Override

@@ -213,7 +213,7 @@ public class ManagerImp implements Manager {
         //从通知更新中移除
         stateNotification.removeState(task.getExistState());
 
-        Log.i("传输管理器@结束任务: "+task.toString() +"\n   >>"+ task.getExistState());
+        Log.i("传输管理器@结束任务: "+task.toString() +"\n >>"+ task.getExistState());
     }
     /**
      * 队列任务
@@ -234,7 +234,7 @@ public class ManagerImp implements Manager {
                         iterator.remove();
                     }
                         try {
-                            Thread.sleep(1000);
+                            Thread.sleep(50);
                         } catch (InterruptedException e) {
                         }
                 }
