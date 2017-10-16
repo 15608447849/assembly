@@ -148,5 +148,40 @@ public class TaskUtils {
         return StringUtil.matchIpAddress(task.getUri());
     }
 
+    //判断是否需要下载文件 true 覆盖下载
+    public static boolean judgeCover(Task task){
+
+        State state = task.getProgressState();
+        File file = new File(TaskUtils.getLocalFile(task));
+        if (task.isCover()){
+            FileUtil.deleteFile(TaskUtils.getLocalFile(task));//删除文件
+
+        }else{
+            //如果传入MD5 ,判断md5 与 本地文件MD5是否相同
+            if (!StringUtil.isEntry(task.getDownFileMd5())){
+                try {
+                    if (MD5Util.getFileMD5String(file).equalsIgnoreCase(task.getDownFileMd5())){
+                        //不覆盖
+                        state.setState(1);
+                        state.setRecord(true);
+                        state.setResult("不覆盖下载,本地文件MD5与源文件MD5相同('"+task.getDownFileMd5()+"byte'),文件路径: "+ FileUtil.getFilePath(file));
+                        return false;
+                    }
+                } catch (Exception e) {
+                }
+            }else{
+                //根据本地文件 和 服务器文件大小 是否相同
+                if (file.exists() && file.length() == state.getTotalSize()){
+                    //不覆盖
+                    state.setState(1);
+                    state.setRecord(true);
+                    state.setResult("不覆盖下载,本地文件大小和服务器相等('"+file.length()+"'),文件路径: "+ FileUtil.getFilePath(file));
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
 
 }

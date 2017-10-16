@@ -27,11 +27,18 @@ public class TaskFactory {
 
     //创建Http任务
     public static Task httpTaskDown(String url,String httpType,String localDir,String fileName,boolean isCover){
-        return httpTaskDown(url,httpType,localDir,fileName,null,isCover);
+        return httpTaskDown(url,httpType,localDir,fileName,null,isCover,null);
     }
-
+    //创建Http任务
+    public static Task httpTaskDown(String url,String httpType,String localDir,String fileName,boolean isCover,String sourceMd5){
+        return httpTaskDown(url,httpType,localDir,fileName,null,isCover,sourceMd5);
+    }
     //创建Http任务
     public static Task httpTaskDown(String url,String httpType,String localDir,String fileName,HashMap<String,String> headerMap,boolean isCover){
+        return httpTaskDown(url,httpType,localDir,fileName,headerMap,isCover,null);
+    }
+    //创建Http任务
+    public static Task httpTaskDown(String url,String httpType,String localDir,String fileName,HashMap<String,String> headerMap,boolean isCover,String sourceMd5){
         Task task = new Task();
         task.setTid(getCurrentDate());
         task.setType(Task.Type.HTTP_DOWN);
@@ -46,6 +53,7 @@ public class TaskFactory {
         task.setMumThread(false);
         task.setMaxThread(0);
         task.setParams(headerMap);
+        task.setDownFileMd5(sourceMd5);
         return task;
     }
 
@@ -88,7 +96,7 @@ public class TaskFactory {
         return ftpInfo;
     }
     //创建 ftp 下载任务
-    public static Task ftpTaskDown(String url,String localDir,String fileName,boolean isCove){
+    public static Task ftpTaskDown(String url,String localDir,String fileName,boolean isCove,String sourceMD5){
         url = StringUtil.filter(url);
         //解析协议 -> ftp信息
         Map<String,String> map = parseFtpUrl(url);
@@ -105,7 +113,12 @@ public class TaskFactory {
         task.setDconfig(fileName+CONF);
         task.setRemotePath(map.get("path"));
         task.setRemoteFileName(map.get("file"));
+        task.setDownFileMd5(sourceMD5);
         return task;
+    }
+    //创建 ftp 下载任务
+    public static Task ftpTaskDown(String url,String localDir,String fileName,boolean isCove){
+        return ftpTaskDown(url,localDir,fileName,isCove,null);
     }
 
     //http上传本地文件到指定url

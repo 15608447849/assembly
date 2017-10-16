@@ -45,7 +45,6 @@ public class FtpLoadImp extends Excute {
         String tmp = TaskUtils.getTmpFile(task); // 临时文件路径
 
         long length = client.getFtpFileSize(remote);
-        Log.e("FTP下载远程路径"+remote+" 大小:"+length);
         //获取文件大小
         state.setTotalSize(length);
 
@@ -58,16 +57,12 @@ public class FtpLoadImp extends Excute {
             manager.backClienOnError(client);
             return null;
         }
-        //查看本地是否存在文件
-        File localFile = new File(local);
-        if (!task.isCover() && localFile.exists() && localFile.length() == state.getTotalSize()){
-            state.setState(1);
-            state.setRecord(true);
+
+        //查看本地是否存在文件 判断是否覆盖下载 true 继续下载 false 本地存在 不覆盖
+        if (!TaskUtils.judgeCover(task)){
             finish(task);
             manager.backClient(client);
             return null;
-        }else{
-            FileUtil.deleteFile(local);
         }
         //查看临时文件
         File tmpFile = new File(tmp);
@@ -78,7 +73,6 @@ public class FtpLoadImp extends Excute {
             try {
                 tmpFile.createNewFile();//创建临时文件
             } catch (IOException e) {
-                ;
                 state.setError("本地创建文件失败:"+tmp);
                 state.setState(-1);
                 state.setRecord(true);

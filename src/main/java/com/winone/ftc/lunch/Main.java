@@ -34,6 +34,17 @@ public class Main{
 //        TEST_();
 //        httpDown();
 
+//        down("http://172.16.0.201:8080/lee/1.zip");
+//        down(args[0]);
+    }
+
+    private static void down(String url) {
+
+        ManagerImp.get().execute(TaskFactory.httpTaskDown(url,
+                "GET",
+                "./temp",
+                url.substring(url.lastIndexOf("/")+1),
+                true,"2d29de32451df9fe070e2e3e4e7a3dc3"));
     }
 
     private static void httpDown() {
@@ -54,26 +65,34 @@ public class Main{
 //                "1.jpg",
 //                true));
 
-        /**
-         http://dzb.scdaily.cn/pdf/2017/0825/2017-08-25-1.pdf
-         http://dzb.scdaily.cn/pdf/2017/0825/2017-08-25-2.pdf
-         http://dzb.scdaily.cn/pdf/2017/0825/2017-08-25-3.pdf
-         http://dzb.scdaily.cn/pdf/2017/0825/2017-08-25-4.pdf
-         http://dzb.scdaily.cn/pdf/2017/0825/2017-08-25-5.pdf
-         http://dzb.scdaily.cn/pdf/2017/0825/2017-08-25-6.pdf
-         http://dzb.scdaily.cn/pdf/2017/0825/2017-08-25-7.pdf
-         http://dzb.scdaily.cn/pdf/2017/0825/2017-08-25-8.pdf
-         http://dzb.scdaily.cn/pdf/2017/0825/2017-08-25-9.pdf
-         */
+//        /**
+//         http://dzb.scdaily.cn/pdf/2017/0825/2017-08-25-1.pdf
+//         http://dzb.scdaily.cn/pdf/2017/0825/2017-08-25-2.pdf
+//         http://dzb.scdaily.cn/pdf/2017/0825/2017-08-25-3.pdf
+//         http://dzb.scdaily.cn/pdf/2017/0825/2017-08-25-4.pdf
+//         http://dzb.scdaily.cn/pdf/2017/0825/2017-08-25-5.pdf
+//         http://dzb.scdaily.cn/pdf/2017/0825/2017-08-25-6.pdf
+//         http://dzb.scdaily.cn/pdf/2017/0825/2017-08-25-7.pdf
+//         http://dzb.scdaily.cn/pdf/2017/0825/2017-08-25-8.pdf
+//         http://dzb.scdaily.cn/pdf/2017/0825/2017-08-25-9.pdf
+//         */
+//
+//       for (int i = 1;i<=9;i++){
+//           ManagerImp.get().execute(TaskFactory.httpTaskDown("http://dzb.scdaily.cn/pdf/2017/0825/2017-08-25-"+i+".pdf",
+//                   "GET",
+//                   "C:\\FileServerDirs\\TEST\\pdf",
+//                   i+".pdf",
+//                   true));
+//       }
 
-       for (int i = 1;i<=9;i++){
-           ManagerImp.get().execute(TaskFactory.httpTaskDown("http://dzb.scdaily.cn/pdf/2017/0825/2017-08-25-"+i+".pdf",
-                   "GET",
-                   "C:\\FileServerDirs\\TEST\\pdf",
-                   i+".pdf",
-                   true));
-       }
-
+        Task task =  TaskFactory.httpTaskDown("http://172.16.0.201:8080/lee/1.zip",
+                "GET",
+                "C:\\FileServerDirs\\TEST",
+                "单面茶几.zip",
+                false);
+                ManagerImp.get().execute(
+                        task
+                );
 
 
 //        while (true);
@@ -329,6 +348,8 @@ public class Main{
         } catch (IOException e) {
             Log.i("启动TCP服务器失败.");
         }
+
+        while (true);
     }
 
 

@@ -2,12 +2,11 @@ package com.winone.ftc.mhttp.imps;
 
 import com.winone.ftc.mcore.itface.Excute;
 import com.winone.ftc.mentity.itface.Mftcs;
+import com.winone.ftc.mentity.mbean.entity.TaskFactory;
 import com.winone.ftc.mhttp.itface.ContrailThread;
 import com.winone.ftc.mentity.mbean.entity.State;
 import com.winone.ftc.mentity.mbean.entity.Task;
-import com.winone.ftc.mtools.Log;
-import com.winone.ftc.mtools.TaskUtils;
-import com.winone.ftc.mtools.FileUtil;
+import com.winone.ftc.mtools.*;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -152,7 +151,6 @@ public class HttpLoadImp extends Excute{
 
         state.setTotalSize(remoteFileSize); //设置文件总大小
         if (remoteFileSize<=0){
-
             state.setState(-1);
             state.setError(task.getUri()+" -> "+ state.getError());
             state.setRecord(true);
@@ -163,18 +161,12 @@ public class HttpLoadImp extends Excute{
             finish(task);
             return null;
         }
-        //判断本地文件是否存在 并且 和服务器大小一样
-        File file = new File(TaskUtils.getLocalFile(task));
-        if (!task.isCover() && file.exists() && file.length() == remoteFileSize ){
-            //不覆盖
-            state.setState(1);
-            state.setRecord(true);
-            state.setResult("不覆盖下载,本地文件已存在: "+file.getAbsolutePath());
+        if (!TaskUtils.judgeCover(task)){
             finish(task);
             return null;
-        }else{
-            FileUtil.deleteFile(TaskUtils.getLocalFile(task));//删除文件
         }
+
+
 
         state.setThreadMap(new LinkedHashMap<>());
         state.setThreadList(new ArrayList<>());

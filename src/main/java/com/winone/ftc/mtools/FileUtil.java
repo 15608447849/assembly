@@ -6,6 +6,8 @@ import java.net.HttpURLConnection;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -332,6 +334,15 @@ public class FileUtil {
            return file.length() == totalSize;
         }else{
             return false;
+        }
+    }
+
+    public static String getFilePath(File file) {
+        if (file==null) return null;
+        try {
+            return file.getCanonicalPath();
+        } catch (IOException e) {
+            return file.getAbsolutePath();
         }
     }
 }

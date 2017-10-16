@@ -12,7 +12,7 @@ import java.util.regex.Pattern;
 public class StringUtil {
     //字符串不为空
     public static boolean isEntry(String str){
-        return str==null || str.length() == 0;
+        return str==null || str.trim().length() == 0 ;
     }
     //url编码
     private static boolean isUnescaped(char ch, boolean component) {

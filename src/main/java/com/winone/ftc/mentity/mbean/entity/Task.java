@@ -13,10 +13,6 @@ import java.util.*;
  *  任务对象
  */
 public class Task {
-
-
-
-
     // 任务类型
     public enum Type{
         HTTP_UP,HTTP_DOWN,FTP_UP, FTP_DOWN,STREAM_UP,NOME
@@ -25,7 +21,6 @@ public class Task {
     public enum State{
         FINISH,NEW,RUNNING
     }
-
     /**
      *  http://host:port/path
      *  ftp://username:password@host:port/path
@@ -53,8 +48,13 @@ public class Task {
     private boolean isRestart = false;
     //是否直接下载,不检测任何状态和是否覆盖
     private boolean isDirectDown;
+    //下载成功是否记录数据库
+    private boolean isRecodeSql = true;
     //进度状态
     private com.winone.ftc.mentity.mbean.entity.State stateing;
+    //下载的文件MD5
+    private String downFileMd5;
+
     private TaskRecord mResult = new TaskRecord();
     //返回记录文件的回调
     public Task.onResult getRecordResult() {
@@ -265,6 +265,14 @@ public class Task {
         isDirectDown = directDown;
     }
 
+    public boolean isRecodeSql() {
+        return isRecodeSql;
+    }
+
+    public void setRecodeSql(boolean recodeSql) {
+        isRecodeSql = recodeSql;
+    }
+
     public void setOtherTaskOnResult(Task otherTask) {
         try {
             Iterator<Task.onResult> iterator = otherTask.getOnResultList().iterator();
@@ -315,10 +323,17 @@ public class Task {
                     //上传的地址, 本地地址, 比较远程地址
                     return  t.getUri().equals(getUri()) &&  TaskUtils.getLocalFile(t).equals(TaskUtils.getLocalFile(this)) && TaskUtils.getRemoteFile(t).equals(TaskUtils.getRemoteFile(this));
                 }
-
             }
         }
         return false;
+    }
+
+    public String getDownFileMd5() {
+        return downFileMd5;
+    }
+
+    public void setDownFileMd5(String downFileMd5) {
+        this.downFileMd5 = downFileMd5;
     }
 
     @Override

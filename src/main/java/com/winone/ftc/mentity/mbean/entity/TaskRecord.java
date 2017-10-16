@@ -31,8 +31,10 @@ public class TaskRecord implements Task.onResult {
              FileUtil.deleteFile(TaskUtils.getConfigFile(task));
             //删除临时文件
              FileUtil.deleteFile(TaskUtils.getTmpFile(task));
-            //记录 - 1.文件MD5 2文件所在路径 3.文件来源url
-            TaskUtils.writeSql(task);
+             if (task.isRecodeSql()){
+                 //记录 - 1.文件MD5 2 文件所在路径 3.文件来源url
+                 TaskUtils.writeSql(task);
+             }
             //通知绑定的回调
             callBy(task,state);
     }

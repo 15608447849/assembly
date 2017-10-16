@@ -1,5 +1,6 @@
 package com.winone.ftc.mentity.mbean.singer;
 
+import com.winone.ftc.mtools.FileUtil;
 import com.winone.ftc.mtools.Log;
 import m.sqlites.SQLiteHelper;
 
@@ -33,7 +34,7 @@ public class DownloadFileRecordSql extends Thread {
                 }
             }
             try {
-                sleep(10*1000);
+                sleep(60 * 1000);
             } catch (InterruptedException e) {
             }
         }
@@ -58,7 +59,7 @@ public class DownloadFileRecordSql extends Thread {
     public final String SQL_KEY_TIME = "time";
 
     private final ArrayList<ArrayList<Object>> dataList = new ArrayList<>();
-    private final SQLiteHelper sqLiteHelper = new SQLiteHelper(".",SQL_DB);
+    private final SQLiteHelper sqLiteHelper = new SQLiteHelper("."+ FileUtil.SEPARATOR+Log.TAG,SQL_DB);
     private final ArrayList<String> keysList = new ArrayList<>();
     /**
      * 初始化表
@@ -87,9 +88,10 @@ public class DownloadFileRecordSql extends Thread {
     /**
      * 插入数据
      */
-    public void addRecord(String md5,String url,String localPath,long start,long end,long length){
+    public void addRecord(final String md5,final String url,final String localPath,final long start,final long end,final long length){
 
-        ArrayList<Object> valuesList = new ArrayList();
+        new Thread(()->{
+            ArrayList<Object> valuesList = new ArrayList();
             valuesList.add(md5);
             valuesList.add(url);
             valuesList.add(localPath);
@@ -100,7 +102,8 @@ public class DownloadFileRecordSql extends Thread {
             synchronized (this){
                 dataList.add(valuesList);
             }
-//        sqLiteHelper.insertOrUpdate(SQL_TABLE,keysList,valuesList);
+        }).start();
+
     }
 
 }

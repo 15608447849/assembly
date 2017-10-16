@@ -11,7 +11,7 @@ import static com.winone.ftc.mtools.FileUtil.SEPARATOR;
  */
 public class Log {
 
-    private static final String TAG ="FTC_LOG";
+    public static final String TAG ="FTC_LOG";
     public static String LOG_FILE_PATH = FileUtil.PROGRESS_HOME_PATH;
     private static String LOG_FILE_FILE = "info.log";
     private static String PROGRESS_LOG_FILE_FILE = "progress.log";

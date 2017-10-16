@@ -1,5 +1,6 @@
 package m.sqlites;
 
+import com.winone.ftc.mtools.FileUtil;
 import com.winone.ftc.mtools.Log;
 import com.winone.ftc.mtools.StringUtil;
 
@@ -31,13 +32,26 @@ public class SQLiteHelper extends Thread {
     private final ArrayList<SQLiteConnect> mConnectPools = new ArrayList<>();
     protected final String path;
     protected final String dbName;
+
+
+
     /**
      *
-     * @param path 数据库路径
+     * @param fileDirPath 数据库路径 不存在自动创建
      * @param dbName 数据库名
      */
-    public SQLiteHelper(String path,String dbName){
-       this.path =StringUtil.isEntry(path)?MEMORY_DB_PATH: ":"+path+"/";
+    public SQLiteHelper(String fileDirPath,String dbName){
+        if (StringUtil.isEntry(fileDirPath)){
+            this.path = MEMORY_DB_PATH;
+        }else{
+            if (FileUtil.checkDir(fileDirPath)){
+                this.path = ":"+fileDirPath+"/";
+            }else{
+                throw new IllegalStateException("SQL path '" + fileDirPath +"' is valid.");
+            }
+
+        }
+
        this.dbName = dbName;
     }
 
