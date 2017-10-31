@@ -32,7 +32,7 @@ public class Main{
 //        upload();
 //        uploadFTP();
 //        TEST_();
-//        httpDown();
+        httpDown();
 
 //        down("http://172.16.0.201:8080/lee/1.zip");
 //        down(args[0]);
@@ -49,11 +49,12 @@ public class Main{
 
     private static void httpDown() {
         ManagerImp.get().initial(new ManagerParams(4,false,true,false));
-//        ManagerImp.get().execute(TaskFactory.httpTaskDown("http://bfo.clientdown.sdo.com/GA_2.26.2.0_20170818/GA_client_2.26.2.0_20170818.exe",
-//                "GET",
-//                "C:\\FileServerDirs\\TEST",
-//                "rxyh.exe",
-//                true));
+
+        ManagerImp.get().execute(TaskFactory.httpTaskDown("http://bfo.clientdown.sdo.com/GA_2.26.2.0_20170818/GA_client_2.26.2.0_20170818.exe",
+                "GET",
+                "C:\\FileServerDirs\\TEST",
+                "rxyh.exe",
+                true).setDownloadLimitMax(200));
 //        ManagerImp.get().execute(TaskFactory.httpTaskDown(" http://mxd.clientdown.sdo.com.sd.qcloudcdn.com/145/Data145.zip",
 //                "GET",
 //                "C:\\FileServerDirs\\TEST",
@@ -85,14 +86,14 @@ public class Main{
 //                   true));
 //       }
 
-        Task task =  TaskFactory.httpTaskDown("http://172.16.0.201:8080/lee/1.zip",
-                "GET",
-                "C:\\FileServerDirs\\TEST",
-                "单面茶几.zip",
-                false);
-                ManagerImp.get().execute(
-                        task
-                );
+//        Task task =  TaskFactory.httpTaskDown("http://172.16.0.201:8080/lee/1.zip",
+//                "GET",
+//                "C:\\FileServerDirs\\TEST",
+//                "单面茶几.zip",
+//                false);
+//                ManagerImp.get().execute(
+//                        task
+//                );
 
 
 //        while (true);

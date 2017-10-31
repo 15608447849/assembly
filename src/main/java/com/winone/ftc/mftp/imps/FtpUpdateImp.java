@@ -37,7 +37,7 @@ public class FtpUpdateImp extends Excute {
         FtpManager manager = MftpManager.getInstants();
         FtpClientIntface client = manager.getClient(task.getFtpInfo());
         if (client==null){
-            state.setError("FTP客户端获取失败.上传文件失败");
+            state.setError(State.ErrorCode.ERROR_BY_FTP_CLIENT,"FTP客户端获取失败.上传文件失败");
             state.setState(-1);
             state.setRecord(true);
             finish(task);
@@ -51,7 +51,7 @@ public class FtpUpdateImp extends Excute {
         File localFile = new File(local);
         if (!localFile.exists()){
             //本地文件不存在
-            state.setError("本地文件不存在:"+local);
+            state.setError(State.ErrorCode.ERROR_BY_FILE_NO_EXIST,"本地文件不存在:"+local);
             state.setState(-1);
             state.setRecord(true);
             finish(task);
@@ -84,7 +84,7 @@ public class FtpUpdateImp extends Excute {
 
             @Override
             public void aborted() {
-                state.setError("FTP中断异常");
+                state.setError(State.ErrorCode.ERROR_BY_FTP_CLIENT,"FTP中断异常");
                 state.setState(1);
                 finish(task);
                 manager.backClienOnError(client);
@@ -92,7 +92,7 @@ public class FtpUpdateImp extends Excute {
 
             @Override
             public void failed() {
-                state.setError("FTP上传失败");
+                state.setError(State.ErrorCode.ERROR_BY_FTP_CLIENT,"FTP上传失败");
                 state.setState(1);
                 finish(task);
                 manager.backClienOnError(client);

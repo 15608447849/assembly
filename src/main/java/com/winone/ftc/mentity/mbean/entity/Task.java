@@ -54,6 +54,12 @@ public class Task {
     private com.winone.ftc.mentity.mbean.entity.State stateing;
     //下载的文件MD5
     private String downFileMd5;
+    //下载缓冲大小数
+    private final int downloadBufferSize = 1024 *8; //8KB
+    //下载最大速度限制
+    private long downloadLimitMax = 0;
+    //上传最大速度限制
+    private long updateLimitMax = 0;
 
     private TaskRecord mResult = new TaskRecord();
     //返回记录文件的回调
@@ -307,6 +313,27 @@ public class Task {
     }
 
 
+    public int getDownloadBufferSize() {
+        return downloadBufferSize;
+    }
+
+    public long getDownloadLimitMax() {
+        return downloadLimitMax;
+    }
+
+    public Task setDownloadLimitMax(long downloadLimitMax) {
+        this.downloadLimitMax = downloadLimitMax;
+        return this;
+    }
+
+    public long getUpdateLimitMax() {
+        return updateLimitMax;
+    }
+
+    public Task setUpdateLimitMax(long updateLimitMax) {
+        this.updateLimitMax = updateLimitMax;
+        return this;
+    }
 
     @Override
     public boolean equals(Object obj) {

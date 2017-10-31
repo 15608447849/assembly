@@ -133,11 +133,10 @@ public class MFtp extends it.sauronsoftware.ftp4j.FTPClient implements FtpClient
     }
 
     @Override
-    public void downloadFile(String remotePath, FileOutputStream out, long startPoint, FTPDataTransferListener listener) {
+    public void downloadFile(String remotePath, FileOutputStream out, long startPoint, FTPDataTransferListener listener,long downLimit) {
         try {
-            download(remotePath,out,startPoint,listener);
+            download(remotePath,out,startPoint,listener,downLimit);
         } catch (IOException | FTPIllegalReplyException | FTPException | FTPAbortedException | FTPDataTransferException e) {
-
             listener.failed();
         }
     }
@@ -183,7 +182,6 @@ public class MFtp extends it.sauronsoftware.ftp4j.FTPClient implements FtpClient
                 }
 
             } catch (IOException | FTPIllegalReplyException | FTPDataTransferException | FTPException | FTPAbortedException e) {
-
                 listener.failed();
             }
         }

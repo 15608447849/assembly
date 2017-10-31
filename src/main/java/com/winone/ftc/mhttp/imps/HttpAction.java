@@ -4,6 +4,7 @@ import com.winone.ftc.mhttp.itface.ContrailThread;
 import com.winone.ftc.mentity.mbean.entity.State;
 import com.winone.ftc.mentity.mbean.entity.Task;
 import com.winone.ftc.mtools.FileUtil;
+import com.winone.ftc.mtools.Log;
 import com.winone.ftc.mtools.TaskUtils;
 
 import java.io.*;
@@ -80,11 +81,13 @@ public class HttpAction implements ContrailThread.onAction
                     out = new RandomAccessFile(TaskUtils.getTmpFile(task), "rw");
                     out.seek(start+progress);
 
-                    byte[] b = new byte[1024*8]; // 8k 缓存
+                    byte[] b = new byte[task.getDownloadBufferSize()]; // 8k 缓存
                     int len ;
                     ByteBuffer buff = ByteBuffer.allocate(b.length);//缓冲区
                     FileChannel outChannel =  out.getChannel();
                     isWorking = true;
+                    long cTime = System.currentTimeMillis();
+                    long sleepTime = 0L;
                      while (isTag && (len = input.read(b)) != -1) {
                          buff.clear();
                          buff.put(b,0,len);
@@ -93,6 +96,19 @@ public class HttpAction implements ContrailThread.onAction
                          progress += len;
                          //更新状态
                          state.putThreadMapValue(key,progress);//放入的是进度
+//                       假设下载或者上传速度上限是500 (KB/s)
+                         //那么发送一个固定的字节数据(假设是1024*8字节)的时间花费是：(1024*8)/500
+                         //而在实际情况下，发送n字节的数据只花费了t秒，那么发送该发送线程就应该睡眠(1024*8)/500-t秒
+
+                         if(task.getDownloadLimitMax()>0){
+                             sleepTime = (System.currentTimeMillis() - cTime);
+                             sleepTime = (task.getDownloadBufferSize() / task.getDownloadLimitMax() - sleepTime ) * task.getMaxThread();
+                             if (sleepTime > 0){
+                                 Thread.sleep(sleepTime);
+                             }
+                             cTime = System.currentTimeMillis();
+                         }
+
                     }
 
                     isWorking = false;
@@ -108,7 +124,7 @@ public class HttpAction implements ContrailThread.onAction
                             tryRemake++;
                             action();
                         }else{
-                            state.setError("file download is error:"+ start+" added to "+progress+" not is "+ end);
+                            state.setError(State.ErrorCode.ERROR_BY_TRANSLATE,"file download error:"+ start+" added to "+progress+" not is "+ end);
                             state.setState(-1);
                         }
                     }
@@ -117,7 +133,7 @@ public class HttpAction implements ContrailThread.onAction
                 }
 
             } catch (Exception e) {
-                state.setError("远程服务器错误 : " +e);
+                state.setError( State.ErrorCode.ERROR_BY_REMOTE_SERVER,"远程服务器错误 : " +e);
                 state.setState(-1);
             } finally {
                 //关闭流
@@ -141,7 +157,7 @@ public class HttpAction implements ContrailThread.onAction
         for (StackTraceElement throwable : e.getStackTrace()){
             stringBuffer.append(throwable);
         }
-        state.setError(stringBuffer.toString());
+        state.setError(State.ErrorCode.ERROR_BY_TRANSLATE,stringBuffer.toString());
         state.setState(-1); // 多线程的时候, 有一个出问题 - > 所有任务停止 (有专门的线程循环检测状态值)
     }
 

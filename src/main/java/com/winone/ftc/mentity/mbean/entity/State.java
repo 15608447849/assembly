@@ -12,6 +12,17 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class State{
 
+    public interface ErrorCode{
+
+        int ERROR_BY_FTP_CLIENT = 1;
+        int ERROR_BY_FILE_NO_EXIST = 2;
+        int ERROR_BY_FILE_CREATE_FAIL = 3;
+        int ERROR_BY_TRANSLATE = 4;
+        int ERROR_BY_REMOTE_SERVER = 5;
+        int WARING = 0;
+
+    }
+
     public static final int STATE_POINT = 0;
     public static final int THREAD_NUMBER_POINT = 5;
     public static final int TOTAL_SIZE_POINT= 10;
@@ -41,9 +52,9 @@ public class State{
         this.task = task;
         this.state = 0;
     }
-    public State(String error) {
-        this.setError(error);
-    }
+//    public State(int code,String error) {
+//        this.setError(code,error);
+//    }
 
     public boolean isInitWrite() {
         return isInitWrite;
@@ -92,11 +103,11 @@ public class State{
     }
 
     public String getError() {
-        return error;
+        return error==null?null:"["+error+"]";
     }
 
-    public void setError(String error) {
-        this.error = error;
+    public void setError(int code,String error) {
+        this.error = (this.error==null?"{"+code+","+error+"}" : this.error+",{"+code+","+error+"}");
     }
 
     public int getThreadNumber() {

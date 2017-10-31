@@ -23,6 +23,6 @@ public interface FtpClientIntface {
     boolean isUsable();//是否可用
     boolean isNotUsed();//未被使用
     long getFtpFileSize(String ftpAbsulutePath);
-    void downloadFile(String remotePath, FileOutputStream out, long startPoint, FTPDataTransferListener listener);
+    void downloadFile(String remotePath, FileOutputStream out, long startPoint, FTPDataTransferListener listener,long downLimit);
     void uploadFile(String remoteDir,String remoteFileName, File localFile, FTPDataTransferListener listener);
 }

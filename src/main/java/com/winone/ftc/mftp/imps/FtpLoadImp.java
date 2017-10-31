@@ -34,7 +34,7 @@ public class FtpLoadImp extends Excute {
         //获取ftp客户端
         FtpClientIntface client = manager.getClient(task.getFtpInfo());
         if (client==null) {
-            state.setError("FTP客户端获取失败.无法下载文件");
+            state.setError(State.ErrorCode.ERROR_BY_FTP_CLIENT,"FTP客户端获取失败.无法下载文件");
             state.setState(-1);
             state.setRecord(true);
             finish(task);
@@ -50,7 +50,7 @@ public class FtpLoadImp extends Excute {
 
         if (state.getTotalSize() == 0){
 
-            state.setError("FTP客户端找不到文件:"+remote);
+            state.setError(State.ErrorCode.ERROR_BY_FILE_NO_EXIST,"FTP客户端找不到远程文件:"+remote);
             state.setState(-1);
             state.setRecord(true);
             finish(task);
@@ -73,7 +73,7 @@ public class FtpLoadImp extends Excute {
             try {
                 tmpFile.createNewFile();//创建临时文件
             } catch (IOException e) {
-                state.setError("本地创建文件失败:"+tmp);
+                state.setError(State.ErrorCode.ERROR_BY_FILE_CREATE_FAIL,"本地创建文件失败:"+tmp);
                 state.setState(-1);
                 state.setRecord(true);
                 finish(task);
@@ -127,20 +127,20 @@ public class FtpLoadImp extends Excute {
                 @Override
                 public void aborted() {
                     //中断
-                    state.setError("FTP中断异常");
+                    state.setError(State.ErrorCode.ERROR_BY_FTP_CLIENT,"FTP中断异常");
                     state.setState(-1);
                 }
 
                 @Override
                 public void failed() {
                     //失败
-                    state.setError("FTP下载失败");
+                    state.setError(State.ErrorCode.ERROR_BY_FTP_CLIENT,"FTP下载失败");
                     state.setState(-1);
                 }
-            });
+            }, task.getDownloadLimitMax()
+            );
         } catch (FileNotFoundException e) {
-            ;
-            state.setError(e.getMessage());
+            state.setError(State.ErrorCode.ERROR_BY_TRANSLATE,e.getMessage());
             state.setState(-1);
         }finally {
             FileUtil.closeStream(null,out,null,null);

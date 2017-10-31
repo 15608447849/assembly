@@ -3273,7 +3273,7 @@ public class FTPClient {
 			throw new FTPDataTransferException(e);
 		}
 		try {
-			download(remoteFileName, outputStream, restartAt, listener);
+			download(remoteFileName, outputStream, restartAt, listener,0);
 		} catch (IllegalStateException e) {
 			throw e;
 		} catch (IOException e) {
@@ -3315,6 +3315,8 @@ public class FTPClient {
 	 *            supports resuming of broken data transfers.
 	 * @param listener
 	 *            The listener for the operation. Could be null.
+	 * @param downLimit
+	 * 				node
 	 * @throws IllegalStateException
 	 *             If the client is not connected or not authenticated.
 	 * @throws IOException
@@ -3333,7 +3335,7 @@ public class FTPClient {
 	 * @see FTPClient#abortCurrentDataTransfer(boolean)
 	 */
 	public void download(String fileName, OutputStream outputStream,
-			long restartAt, FTPDataTransferListener listener)
+			long restartAt, FTPDataTransferListener listener,long downLimit)
 			throws IllegalStateException, IOException,
 			FTPIllegalReplyException, FTPException, FTPDataTransferException,
 			FTPAbortedException {
@@ -3416,12 +3418,26 @@ public class FTPClient {
 						Writer writer = new OutputStreamWriter(outputStream);
 						char[] buffer = new char[SEND_AND_RECEIVE_BUFFER_SIZE];
 						int l;
+						long cTime = System.currentTimeMillis();
+						long sleepTime = 0;
 						while ((l = reader.read(buffer, 0, buffer.length)) != -1) {
 							writer.write(buffer, 0, l);
 							writer.flush();
 							if (listener != null) {
 								listener.transferred(l);
 							}
+							if(downLimit>0){
+								sleepTime = (System.currentTimeMillis() - cTime);
+								sleepTime = SEND_AND_RECEIVE_BUFFER_SIZE / downLimit - sleepTime ;
+								if (sleepTime > 0){
+									try {
+										Thread.sleep(sleepTime);
+									} catch (InterruptedException e) {
+									}
+								}
+								cTime = System.currentTimeMillis();
+							}
+
 						}
 					} else if (tp == TYPE_BINARY) {
 						byte[] buffer = new byte[SEND_AND_RECEIVE_BUFFER_SIZE];

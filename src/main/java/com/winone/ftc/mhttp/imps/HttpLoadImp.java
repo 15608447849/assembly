@@ -102,7 +102,7 @@ public class HttpLoadImp extends Excute{
                     }finally {
                         FileUtil.closeStream(inputStream,fileOutputStream,null,httpURLConnection);
                     }
-                    state.setError("获取文件大小:"+ fileLength+", 尝试下载完成.未检测结果是否正确.");
+                    state.setError(State.ErrorCode.WARING,"获取文件大小:"+ fileLength+", 尝试下载完成.未检测结果是否正确.");
                     fileLength = -2;
                 }else{
                     if (fileLength<=0 && (code==200 || code==206)){
@@ -129,7 +129,7 @@ public class HttpLoadImp extends Excute{
                     return getRemoteFileSize(task,tag,failTry);
                 }
             }
-            task.getExistState().setError("远程文件错误:\n "+ e.toString());
+            task.getExistState().setError(State.ErrorCode.ERROR_BY_REMOTE_SERVER,"远程文件错误:\n "+ e.toString());
 
         }finally {
             if (httpURLConnection!=null){
@@ -152,7 +152,7 @@ public class HttpLoadImp extends Excute{
         state.setTotalSize(remoteFileSize); //设置文件总大小
         if (remoteFileSize<=0){
             state.setState(-1);
-            state.setError(task.getUri()+" -> "+ state.getError());
+            state.setError(State.ErrorCode.ERROR_BY_TRANSLATE,task.getUri()+" -> "+ state.getError());
             state.setRecord(true);
             if (remoteFileSize==-2 && state.getResult().equals("200")) {
                 task.setCover(false);//避免临时文件覆盖
@@ -227,7 +227,7 @@ public class HttpLoadImp extends Excute{
                     raf.setLength(state.getTotalSize());
                     raf.close();
                 } catch (Exception e) {
-                    state.setError("创建临时文件错误:"+e.getMessage());
+                    state.setError(State.ErrorCode.ERROR_BY_FILE_CREATE_FAIL,"创建临时文件错误:"+e.getMessage());
                     state.setState(-1);
                 } finally {
                     FileUtil.closeStream(null,null,raf,null);
@@ -248,7 +248,7 @@ public class HttpLoadImp extends Excute{
                     FileUtil.deleteFile(TaskUtils.getTmpFile(task));
                     tmp.createNewFile();
                 } catch (IOException e) {
-                    state.setError("创建临时文件错误:"+e.getMessage());
+                    state.setError(State.ErrorCode.ERROR_BY_FILE_CREATE_FAIL,"创建临时文件错误:"+e.getMessage());
                     state.setState(-1);
                 }
             }
@@ -297,8 +297,8 @@ public class HttpLoadImp extends Excute{
             //再次检测文件完整性 检测本地文件大小,不存在检测临时文件大小
             if (!FileUtil.checkFileLength(TaskUtils.getLocalFile(task),state.getTotalSize())){
                if (!FileUtil.checkFileLength(TaskUtils.getTmpFile(task),state.getTotalSize())){
-                    state.setState(1);
-                    state.setError("检测文件长度错误,大小不正确或文件不存在.");
+                    state.setState(-1);
+                    state.setError(State.ErrorCode.ERROR_BY_TRANSLATE,"检测文件长度错误,大小不正确或文件不存在.");
                 }
             }
         }

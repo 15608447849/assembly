@@ -49,7 +49,7 @@ public class HttpUpdateImp extends Excute {
         if (task.getInStream()==null){
             localFile = new File(local);
             if (!localFile.exists()){
-                state.setError("本地文件不存在:"+local);
+                state.setError(State.ErrorCode.ERROR_BY_FILE_NO_EXIST,"本地文件不存在:"+local);
                 state.setState(-1);
                 state.setRecord(true);
                 finish(task);
@@ -125,14 +125,13 @@ public class HttpUpdateImp extends Excute {
                 state.setResult(resultBuffer.toString());
                 Log.i("HTTP文件上传返回结果:"+state.getResult());
                 }else{
-                state.setError("http错误,返回值code:"+recode);
+                state.setError(State.ErrorCode.ERROR_BY_TRANSLATE,"http错误,返回值code:"+recode);
                 state.setState(-1);
                 }
             httpURLConnection.disconnect();
 
         }catch (Exception e){
-            ;
-            state.setError("http错误:"+e.getMessage());
+            state.setError(State.ErrorCode.ERROR_BY_TRANSLATE,"http错误:"+e.getMessage());
             state.setState(-1);
         }finally {
             FileUtil.closeStream(is,dos,null,httpURLConnection);
