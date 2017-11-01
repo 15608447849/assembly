@@ -1,6 +1,6 @@
 package com.winone.ftc.mftp.itface;
 
-import com.winone.ftc.mentity.mbean.entity.FtpInfo;
+import com.winone.ftc.mentity.mbean.entity.Task;
 
 /**
  * Created by lzp on 2017/5/11.
@@ -8,7 +8,7 @@ import com.winone.ftc.mentity.mbean.entity.FtpInfo;
  */
 public interface FtpManager {
     //获取客户端
-    FtpClientIntface getClient(FtpInfo info);
+    FtpClientIntface getClient(Task task);
     //返回客户端
     void backClient(FtpClientIntface client);
     void backClienOnError(FtpClientIntface client);

@@ -116,11 +116,15 @@ public class HttpLoadImp extends Excute{
             }
             else
             {
-                throw new Exception( task.getUri() +" http response code: "+ code);
+                if(code==404){
+                    task.getExistState().setError(State.ErrorCode.SOURCE_FILE_NO_EXIST,"找不到服务器文件路径.");
+                }
+                throw new Exception( "link: "+ task.getUri() +", http response code: "+ code);
             }
 
         } catch (Exception e) {
             if (e instanceof UnknownHostException || e instanceof SocketTimeoutException){
+                task.getExistState().setError(State.ErrorCode.CONNECTED_TIMEOUT,"服务器连接超时 : "+ e.toString());
                 try {
                     Thread.sleep(5 * 1000);
                 } catch (InterruptedException e1) {

@@ -10,7 +10,7 @@ import com.winone.ftc.mftp.itface.FtpClientIntface;
 import com.winone.ftc.mftp.itface.FtpManager;
 import com.winone.ftc.mtools.FileUtil;
 import com.winone.ftc.mtools.Log;
-import it.sauronsoftware.ftp4j.FTPDataTransferListener;
+import it.sauronsoftware.ftp4j.*;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -32,7 +32,7 @@ public class FtpLoadImp extends Excute {
 
         FtpManager manager = MftpManager.getInstants();
         //获取ftp客户端
-        FtpClientIntface client = manager.getClient(task.getFtpInfo());
+        FtpClientIntface client = manager.getClient(task);
         if (client==null) {
             state.setError(State.ErrorCode.ERROR_BY_FTP_CLIENT,"FTP客户端获取失败.无法下载文件");
             state.setState(-1);
@@ -50,7 +50,7 @@ public class FtpLoadImp extends Excute {
 
         if (state.getTotalSize() == 0){
 
-            state.setError(State.ErrorCode.ERROR_BY_FILE_NO_EXIST,"FTP客户端找不到远程文件:"+remote);
+            state.setError(State.ErrorCode.SOURCE_FILE_NO_EXIST,"FTP客户端找不到远程文件:"+remote);
             state.setState(-1);
             state.setRecord(true);
             finish(task);
@@ -137,8 +137,19 @@ public class FtpLoadImp extends Excute {
                     state.setError(State.ErrorCode.ERROR_BY_FTP_CLIENT,"FTP下载失败");
                     state.setState(-1);
                 }
-            }, task.getDownloadLimitMax()
-            );
+                 @Override
+                 public void error(Exception e) {
+                    if (e instanceof FTPDataTransferException){
+                        state.setError(State.ErrorCode.DWONLOAD_TIMEOUT, e.toString());
+                    }else if (e instanceof FTPException || e instanceof FTPException){
+                        state.setError(State.ErrorCode.CONNECTED_TIMEOUT, e.toString());
+                    } else{
+                        state.setError(State.ErrorCode.ERROR_BY_TRANSLATE, e.toString());
+                    }
+                 }
+
+           },
+            task.getDownloadLimitMax());
         } catch (FileNotFoundException e) {
             state.setError(State.ErrorCode.ERROR_BY_TRANSLATE,e.getMessage());
             state.setState(-1);

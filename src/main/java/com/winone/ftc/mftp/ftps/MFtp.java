@@ -137,6 +137,7 @@ public class MFtp extends it.sauronsoftware.ftp4j.FTPClient implements FtpClient
         try {
             download(remotePath,out,startPoint,listener,downLimit);
         } catch (IOException | FTPIllegalReplyException | FTPException | FTPAbortedException | FTPDataTransferException e) {
+            listener.error(e);
             listener.failed();
         }
     }
@@ -149,11 +150,13 @@ public class MFtp extends it.sauronsoftware.ftp4j.FTPClient implements FtpClient
                 //创建目录
                 createDirectory(remoteDir);
             } catch (IOException | FTPIllegalReplyException  | FTPException  e) {
+                listener.error(e);
             }
             try {
                 //改变当前目录
                 changeDirectory(remoteDir);
             } catch (IOException | FTPIllegalReplyException  | FTPException  e) {
+                listener.error(e);
             }
 
             try {
@@ -161,7 +164,7 @@ public class MFtp extends it.sauronsoftware.ftp4j.FTPClient implements FtpClient
                 changeDirectory(remoteDir);
 
                 if (!localFile.exists()) {
-                    Log.e("FTP 上传错误: "+localFile.getAbsolutePath()+"不存在");
+                    listener.error(new IllegalArgumentException("file '" + localFile.getAbsolutePath()+"' no exist."));
                     listener.aborted();
                 }
                 InputStream inputStream = null;
@@ -170,7 +173,7 @@ public class MFtp extends it.sauronsoftware.ftp4j.FTPClient implements FtpClient
                     if (remoteFileName==null || remoteFileName.equals("")) remoteFileName = localFile.getName();
                     upload(remoteFileName,inputStream,0,0,listener);
                 } catch (IOException e) {
-                    Log.e("FTP 上传错误: "+ e.toString());
+                    listener.error(e);
                     listener.aborted();
                 }finally {
                     if (inputStream!=null){
@@ -182,6 +185,7 @@ public class MFtp extends it.sauronsoftware.ftp4j.FTPClient implements FtpClient
                 }
 
             } catch (IOException | FTPIllegalReplyException | FTPDataTransferException | FTPException | FTPAbortedException e) {
+                listener.error(e);
                 listener.failed();
             }
         }

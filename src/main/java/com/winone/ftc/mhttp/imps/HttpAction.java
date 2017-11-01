@@ -9,6 +9,8 @@ import com.winone.ftc.mtools.TaskUtils;
 
 import java.io.*;
 import java.net.HttpURLConnection;
+import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -133,7 +135,12 @@ public class HttpAction implements ContrailThread.onAction
                 }
 
             } catch (Exception e) {
-                state.setError( State.ErrorCode.ERROR_BY_REMOTE_SERVER,"远程服务器错误 : " +e);
+                if (e instanceof SocketTimeoutException){
+                    state.setError( State.ErrorCode.DWONLOAD_TIMEOUT,"下载超时错误 : " +e);
+                }else{
+                    state.setError( State.ErrorCode.ERROR_BY_REMOTE_SERVER,"远程服务器错误 : " +e);
+                }
+
                 state.setState(-1);
             } finally {
                 //关闭流

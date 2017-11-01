@@ -61,4 +61,5 @@ public interface FTPDataTransferListener {
 	 */
 	public void failed();
 
+	public void error(Exception e);
 }

@@ -1,6 +1,8 @@
 package com.winone.ftc.mftp.ftps;
 
 import com.winone.ftc.mentity.mbean.entity.FtpInfo;
+import com.winone.ftc.mentity.mbean.entity.State;
+import com.winone.ftc.mentity.mbean.entity.Task;
 import com.winone.ftc.mftp.itface.FtpClientIntface;
 import com.winone.ftc.mftp.itface.FtpManager;
 import com.winone.ftc.mtools.Log;
@@ -38,10 +40,14 @@ public class MftpManager extends ArrayList implements FtpManager,Runnable {
         }
     }
     @Override
-    public FtpClientIntface getClient(FtpInfo info) {
+    public FtpClientIntface getClient(Task task) {
         try{
             lock.lock();
-            if (info==null) return null;
+            FtpInfo info = task.getFtpInfo();
+            if (info==null){
+                task.getExistState().setError(State.ErrorCode.ERROR_BY_FTP_CLIENT,"FTP服务器信息获取失败.");
+                return null;
+            }
             //先去列表查看
             Iterator<FtpClientIntface>  itr = iterator();
             FtpClientIntface client = null;
@@ -58,6 +64,7 @@ public class MftpManager extends ArrayList implements FtpManager,Runnable {
                 add(client);
                 Log.i(TAG, "新建客户端 : "+ client);
                 if (!client.connect() || !client.login()){ //连接-登录
+                    task.getExistState().setError(State.ErrorCode.PERMISSION_DENIED,"FTP服务器连接或者登陆失败,FTP信息: "+ info);
                     return null;
                 }
             }

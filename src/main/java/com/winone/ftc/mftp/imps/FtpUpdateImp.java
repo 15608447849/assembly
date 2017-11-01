@@ -35,7 +35,7 @@ public class FtpUpdateImp extends Excute {
 
         //获取ftp客户端
         FtpManager manager = MftpManager.getInstants();
-        FtpClientIntface client = manager.getClient(task.getFtpInfo());
+        FtpClientIntface client = manager.getClient(task);
         if (client==null){
             state.setError(State.ErrorCode.ERROR_BY_FTP_CLIENT,"FTP客户端获取失败.上传文件失败");
             state.setState(-1);
@@ -96,6 +96,11 @@ public class FtpUpdateImp extends Excute {
                 state.setState(1);
                 finish(task);
                 manager.backClienOnError(client);
+            }
+
+            @Override
+            public void error(Exception e) {
+                state.setError(State.ErrorCode.ERROR_BY_TRANSLATE,e.toString());
             }
         });
 

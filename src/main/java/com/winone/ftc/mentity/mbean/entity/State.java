@@ -20,6 +20,11 @@ public class State{
         int ERROR_BY_TRANSLATE = 4;
         int ERROR_BY_REMOTE_SERVER = 5;
         int WARING = 0;
+        int SOURCE_FILE_NO_EXIST = 101;
+        int DWONLOAD_TIMEOUT = 102;
+        int PERMISSION_DENIED = 103;
+        int CONNECTED_TIMEOUT = 105;
+
 
     }
 
@@ -52,9 +57,7 @@ public class State{
         this.task = task;
         this.state = 0;
     }
-//    public State(int code,String error) {
-//        this.setError(code,error);
-//    }
+
 
     public boolean isInitWrite() {
         return isInitWrite;
@@ -107,8 +110,12 @@ public class State{
     }
 
     public void setError(int code,String error) {
-        this.error = (this.error==null?"{"+code+","+error+"}" : this.error+",{"+code+","+error+"}");
+        this.error = (this.error==null?gnError(code,error) : this.error+","+gnError(code,error));
     }
+    private String gnError(int code ,String error){
+        return "{\""+code+"\":\""+error+"\"}";
+    }
+
 
     public int getThreadNumber() {
         return threadNumber;
