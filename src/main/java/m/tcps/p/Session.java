@@ -1,157 +1,112 @@
 package m.tcps.p;
 
 import com.winone.ftc.mtools.Log;
-import com.winone.ftc.mtools.StringUtil;
+import m.bytebuffs.FtcBuffer;
+import m.bytebuffs.FtcBufferPool;
 
-import java.io.UnsupportedEncodingException;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
-import java.nio.CharBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
-import java.util.ArrayList;
+import java.util.concurrent.Future;
+
+
 
 /**
  * Created by user on 2017/7/8.
  * 通讯会话
  */
-public abstract class Session implements CompletionHandler<Integer, SessionBean>,Op{
+public abstract class Session implements CompletionHandler<Integer, FtcBuffer>{
 
+    private final FtcTcpAioManager ftcTcpManager;
     private SocketImp socketImp;
-    private volatile  boolean isWriteable = true;
-    public Session(SocketImp connect) {
+    private final SessionOperation operation;
+    private final SessionContentHandle sessionHandle;
+    private final SessionContentStore sessionContentStore;//接受数据存储 -
+    private long send_sum,recv_sum;
+    private static final int BUFFER_SIZE = 1024*16;//缓冲区大小
+
+    public Session(FtcTcpAioManager manager,SocketImp connect) {
+        this.ftcTcpManager = manager;
         this.socketImp = connect;
+        this.operation = new SessionOperation(this);
+        this.sessionHandle = new SessionContentHandle(this);
+        this.sessionContentStore = new SessionContentStore(this);
     }
-
+    //系统读取到信息 回调到这里
     @Override
-    public void completed(Integer integer, SessionBean sessionBean) {
-
+    public void completed(Integer integer, FtcBuffer buffer) {
+        recv_sum+=integer;
+        Log.println("总接收: "+ recv_sum);
         if (!socketImp.isAlive()) return;
         if (integer == -1){
             SocketException socketException = new SocketException("socket connect is close.");
-            socketImp.getCommunication().error(this,null,socketException);
+            socketImp.getAction().error(this,null,socketException);
             socketImp.ConnectError(socketException);
             return;
         }
-        if (sessionBean.getType() == 1){
-           readMessage(integer,sessionBean);
-        }
-        if (sessionBean.getType() == 2){
-            //写入 不实现
-//            Log.i("写入: " + integer);
-            isWriteable = true;
-            sessionBean.getWriteBuffer().getBuf().clear();
-        }
-    }
-
-    protected void readMessage(Integer integer, SessionBean sessionBean){
-
-        //读取
         if (integer>0){
-            try {
-                ByteBuffer buf = sessionBean.getReadBuffer().flipBuf();
-                byte c;
-                while (buf.hasRemaining()){
-                    c = buf.get();
-                    if (c == Protocol.STRING){
-                        sessionBean.setContent_type(1);
-                    }else if (c == Protocol.DATA_END){//  \r回车(发送数据)
-                        if (socketImp.getCommunication()!=null){
-                            if (sessionBean.getContent_type() == 1){
-                                ByteBuffer data = sessionBean.getDatas();
-//                                Log.i("BUFFER: "+ data);
-                                //发送字符串到回调
-                                socketImp.getCommunication().receiveString(this,this,new String(data.array(),"UTF-8"));
-                            }
-
-                        }
-                    }else if (c == Protocol.DATA_CLEAR){//  \n换行(清理)
-                        //清空
-                        sessionBean.clearData();
-                    }else{
-                        sessionBean.addDatas(c);
-                    }
-                }
-            } catch (Exception e) {
-                socketImp.getCommunication().error(this,null,e);
-            }
+            sessionContentStore.storeBuffer(buffer);
         }
-        //再次监听读取
-        read(sessionBean);
+        read();
     }
 
     @Override
-    public void failed(Throwable throwable, SessionBean sessionBean) {
-        socketImp.getCommunication().error(this,throwable,null);
+    public void failed(Throwable throwable, FtcBuffer buffer) {
+        socketImp.getAction().error(this,throwable,null);
         socketImp.ConnectError(throwable);
     }
 
     /**
-     * 写入String信息到对方
-     * @param message
-     */
-    @Override
-    public void writeString(String message) {
-
-        while (!isWriteable);
-
-        assert message!=null;
-        byte[] data;
-        try {
-            data = message.getBytes("UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-            return;
-        }
-
-        SessionBean sessionBean = new SessionBean(2);
-        ByteBuffer buf = sessionBean.getWriteBuffer(data.length+3).clearBuf();//清空
-        buf.put(Protocol.STRING);
-        for (int i=0;i<data.length;i++){
-            buf.put(data[i]);
-        }
-        buf.put(Protocol.DATA_END);
-        buf.put(Protocol.DATA_CLEAR);
-        //发送消息
-        send(sessionBean);
-    }
-    /**
      * 读取数据监听
-     * @param sessionBean
      */
-    public void read(SessionBean sessionBean){
+    public void read(){
         try {
-            if (sessionBean==null) return;
-            ByteBuffer buffer = sessionBean.getReadBuffer().compactBuf();
+            FtcBuffer buffer = FtcBufferPool.get().getBuffer(BUFFER_SIZE);
             if (buffer!=null && socketImp.isAlive()){
-                socketImp.getSocket().read( buffer, sessionBean,this);
+                socketImp.getSocket().read( buffer.clearBuf(), buffer,this);//系统从管道读取数据
             }
         } catch (Exception e) {
-            socketImp.getCommunication().error(this,null,e);
+            socketImp.getAction().error(this,null,e);
         }
     }
     /**
-     * 发送数据监听
+     * 发送数据
      */
-    public void send(SessionBean sessionBean) {
-        try {
-            ByteBuffer buffer = sessionBean.getWriteBuffer().flipBuf();
-            if (buffer!=null && socketImp.isAlive()){
-                socketImp.getSocket().write(buffer,sessionBean,this); //发送消息并且重置
-                isWriteable = false;
+    public void send(FtcBuffer buffer) {
+            try {
+                if (buffer!=null && socketImp.isAlive()){
+                  Future<Integer> future =  socketImp.getSocket().write(buffer.flipBuf()); //发送消息到管道
+                    while(true){
+                        if (future.isDone()){
+//                            Log.println("send size : "+ future.get()+" , "+Thread.currentThread().getName());
+                            send_sum+=future.get();
+                            Log.println("总发送 : "+ send_sum);
+                            break;
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                socketImp.getAction().error(this,null,e);
             }
-        } catch (Exception e) {
-           socketImp.getCommunication().error(this,null,e);
-        }
+
     }
     public void close(){
+        //清理资源
+
         socketImp.close();
     }
-    public Op getOp(){
-        return this;
-    }
+    public SessionOperation getOperation(){return operation;}
     public AsynchronousSocketChannel getSocket(){
         return socketImp.getSocket();
     }
-    public SockServer getServer(){return socketImp.getServer();}
+    public SocketImp getSocketImp(){
+        return socketImp;
+    }
+    public SessionContentStore getStore(){return sessionContentStore;}
+    public FtcTcpAioManager getFtcTcpAioManager(){
+        return ftcTcpManager;
+    }
+
 }

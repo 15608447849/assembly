@@ -1,13 +1,12 @@
 package m.tcps.p;
 
-import m.tcps.c.ServerSession;
-
 import java.nio.channels.AsynchronousSocketChannel;
 
 /**
  * Created by user on 2017/7/8.
  */
 public interface SocketImp {
+
     /**
      * 获取socket
      * @return
@@ -18,27 +17,35 @@ public interface SocketImp {
      * @return
      */
      boolean isAlive();
-
     /**
      * 获取通讯实现对象
      * @return
      */
-     CommunicationAction getCommunication();
-
+     FtcTcpActions getAction();
+    /**
+     * 设置通讯实现对象
+     */
+    void setAction(FtcTcpActions action);
     /**
      * 关闭
      */
     void close();
-
     /**
      * 连接异常
      * @param throwable
      */
     void ConnectError(Throwable throwable);
 
+    /**
+     * 获取会话
+     * @return
+     */
     Session getSession();
-    Op getOp();
 
-    /**如果是服务器端, 获取服务器*/
-    SockServer getServer();
+    /**
+     * 信息
+     */
+    String getInfo();
+
+
 }

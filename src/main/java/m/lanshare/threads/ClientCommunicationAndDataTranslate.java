@@ -114,7 +114,7 @@ public class ClientCommunicationAndDataTranslate extends PThread  implements Com
                if (command == Prog.sendDataInfoResp){
                    byte[] dataMd5 = new byte[16];
                    buffer.get(dataMd5);
-                   Log.i("收到服务器 数据片段 MD5: "+ MD5Util.bytesGetMD5String(dataMd5)+" 数据范围: "+ translate.dataLength+" , "+translate.startPos+"->"+translate.endPos);
+                   Log.i("收到服务器 数据片段 MD5: "+ MD5Util.byteToHexString(dataMd5)+" 数据范围: "+ translate.dataLength+" , "+translate.startPos+"->"+translate.endPos);
                    translate.dataSliceMD5 = dataMd5;
                    state = 2;//等待MTU检测
                    buffer.rewind();
@@ -276,7 +276,7 @@ public class ClientCommunicationAndDataTranslate extends PThread  implements Com
 
     private void checkComplete() {
         if (translate.dataSliceMap.isEmpty()){
-            byte[] md5 = MD5Util.getFileMD5Bytes(translate.filePath.toFile(),translate.startPos,translate.endPos);
+            byte[] md5 = MD5Util.getFileMd5(translate.filePath.toFile(),translate.startPos,translate.endPos);
 //          Log.i("接受完成,检测MD5 STRING : "+ MD5Util.bytesGetMD5String(md5));
             boolean flag = MD5Util.isEqualMD5(translate.dataSliceMD5,md5);
             Log.i("接受完成,检测MD5: "+ flag+", 数据范围: "+ translate.dataLength+" , "+translate.startPos+"->"+translate.endPos);

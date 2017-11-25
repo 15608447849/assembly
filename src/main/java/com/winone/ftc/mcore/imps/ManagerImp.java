@@ -8,8 +8,6 @@ import com.winone.ftc.mentity.mbean.entity.State;
 import com.winone.ftc.mentity.mbean.entity.Task;
 import com.winone.ftc.mentity.mbean.singer.*;
 import com.winone.ftc.mtools.*;
-import m.tcps.c.FtcSocketClient;
-import m.tcps.s.FtcSocketServer;
 
 import java.util.Iterator;
 import java.util.List;

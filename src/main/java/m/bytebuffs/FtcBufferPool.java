@@ -1,6 +1,5 @@
 package m.bytebuffs;
 
-import com.winone.ftc.mtools.Log;
 import m.tcps.p.Protocol;
 
 import java.util.ArrayList;
@@ -10,19 +9,19 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * Created by user on 2017/7/10.
  */
-public class MyBufferPool extends Thread{
+public class FtcBufferPool extends Thread{
     private final int CHECK_TIME = 10 * 1000;
     private final ReentrantLock lock = new ReentrantLock();
-    private MyBufferPool(){
+    private FtcBufferPool(){
         start();
     }
 
 
 
     private static class Holder{
-        private static MyBufferPool pool = new MyBufferPool();
+        private static FtcBufferPool pool = new FtcBufferPool();
     }
-    public static MyBufferPool get(){
+    public static FtcBufferPool get(){
         return Holder.pool;
 
     }
@@ -30,9 +29,9 @@ public class MyBufferPool extends Thread{
     /**
      * buf 池
      */
-    private final ArrayList<MyBuffer> tempList = new ArrayList<>();
+    private final ArrayList<FtcBuffer> tempList = new ArrayList<>();
 
-    private final ArrayList<MyBuffer> onlyList = new ArrayList<>();
+    private final ArrayList<FtcBuffer> onlyList = new ArrayList<>();
 
     @Override
     public void run() {
@@ -51,47 +50,40 @@ public class MyBufferPool extends Thread{
     private void checkBufferList() {
         try {
             lock.lock();
-            Iterator<MyBuffer> iterator = tempList.iterator();
-            MyBuffer buffer = null;
+            Iterator<FtcBuffer> iterator = tempList.iterator();//临时队列
+            FtcBuffer buffer;
             while (iterator.hasNext()){
                 buffer = iterator.next();
-                if (buffer.isNotClearPower()){
+                if (buffer.isNotClearPower()){//是否被允许清理
                     iterator.remove();
-                    onlyList.add(buffer);
-                }else if (buffer.isOutOfDate()){
-                    iterator.remove();
-                    buffer.clear();
+                    onlyList.add(buffer);//添加到永存列表
+                }else if (buffer.isOutOfDate()){//已经长时间未使用
+                    iterator.remove();//移除
+                    buffer.clear();//清理
                 }
             }
-//            Log.i("TEMP BUFFER POLL SIZE: "+ tempList.size());
-//            Log.i("ONLY BUFFER POLL SIZE: "+ onlyList.size());
         } finally {
             lock.unlock();
         }
     }
-    /**
-     * 获取一个buffer,没有创建
-     */
-    public MyBuffer getBuffer(){
-        return getBuffer(Protocol.MTU);
-    }
-    public MyBuffer getBuffer(int length){
+
+    public FtcBuffer getBuffer(int length){
             try{
                 lock.lock();
-                MyBuffer buffer = null;
-                Iterator<MyBuffer> iterator = tempList.iterator();
+                FtcBuffer buffer = null;
+                Iterator<FtcBuffer> iterator = tempList.iterator();//查看临时队列中
                 while (iterator.hasNext()){
                     buffer = iterator.next();
-                    if (buffer.getLength() == length && buffer.isOutOfDate()){
+                    if (buffer.getLength() == length && buffer.isOutOfDate()){//如果容量相同,并且已经超时
                         iterator.remove();
-                        break;
                     }
-                    buffer = null;
                 }
                 if (buffer==null){
-                    buffer = new MyBuffer(length);
+                    buffer = new FtcBuffer(length);//新建一个buffer
+                }else{
+                    buffer.clearBuf();//从池中获取到一个可以使用的, 清理.
                 }
-                tempList.add(buffer);
+                tempList.add(buffer);//再次添加到临时队列中
                 return buffer;
             }finally {
                 lock.unlock();
@@ -102,7 +94,7 @@ public class MyBufferPool extends Thread{
      * 清理buffer
      * @param buffer
      */
-    public void clear(MyBuffer buffer) {
+    public void clear(FtcBuffer buffer) {
 
         try {
             if (buffer.isNotClearPower()){

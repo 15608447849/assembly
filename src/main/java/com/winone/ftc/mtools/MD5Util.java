@@ -1,10 +1,10 @@
 package com.winone.ftc.mtools;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
-import java.nio.MappedByteBuffer;
-import java.nio.channels.FileChannel;
+import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -13,16 +13,26 @@ import java.security.NoSuchAlgorithmException;
  */
 public class MD5Util {
 
-    protected static char hexDigits[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9','a', 'b', 'c', 'd', 'e', 'f' };
-    /**
-     * 获取文件md5的byte值
-     *
-     * @param file
-     * @return
-     * @throws IOException
-     */
-    public static byte[] getFileMD5Bytes(File file){
-        return getFileMD5Bytes(file,0,-1);
+    public static byte[] getFileMd5(File file,long startPort,long endPort){
+        byte[] result = null;
+        RandomAccessFile randomAccessFile = null;
+        try {
+
+            randomAccessFile = new RandomAccessFile(file, "r");
+            randomAccessFile.seek(startPort);
+            byte[] buffer = new byte[(int) (endPort - startPort)];
+            randomAccessFile.read(buffer);
+            result = getBytesMd5(buffer);
+        } catch (Exception e) {
+        }finally {
+            if (randomAccessFile!=null){
+                try {
+                    randomAccessFile.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+        return result;
     }
     /**
      * 获取文件md5的byte值
@@ -31,30 +41,15 @@ public class MD5Util {
      * @return
      * @throws IOException
      */
-    public static byte[] getFileMD5Bytes(File file,long start,long end){
+    public static byte[] getFileMd5(File file){
         byte[] result = null;
-        FileChannel ch = null;
-        MappedByteBuffer byteBuffer = null;
         try {
-            ch = new RandomAccessFile(file,"r").getChannel();
-            if (end == -1) end = ch.size();
-//            Log.e("MD5 GET: "+ file.getAbsolutePath()+" start:"+start+" ,end:"+ end);
-            byteBuffer = ch.map(FileChannel.MapMode.READ_ONLY, start, end-start);//内存映射
-            MessageDigest messagedigest = MessageDigest.getInstance("MD5");
-            messagedigest.update(byteBuffer);
-            result = messagedigest.digest();
-        } catch (Exception e) {
-            ;
-        } finally {
-            if (ch!=null){
-                try {
-                    ch.close();
-                } catch (IOException e) {
-                    ;
-                }
+            try(DigestInputStream digestInputStream = new DigestInputStream(new FileInputStream(file),MessageDigest.getInstance("MD5"))){
+                byte[] buffer =new byte[512];
+                while (digestInputStream.read(buffer) > 0);
+                result = digestInputStream.getMessageDigest().digest();
             }
-            new MPrivilegedAction(byteBuffer);
-            System.gc();
+        } catch (Exception e) {
         }
         return result;
     }
@@ -64,66 +59,66 @@ public class MD5Util {
      * @return
      * @throws IOException
      */
-    public static String getFileMD5String(File file) throws Exception {
-        return bytesGetMD5String(getFileMD5Bytes(file));
+    public static String getFileMd5ByString(File file) throws Exception {
+        return byteToHexString(getFileMd5(file));
     }
     /**
-     * 获取String的MD5值
-     * @param s
+     * 获取一段字节数组的md5
+     * @param buffer
      * @return
      */
-    public static String getMD5String(String s) {
-        byte[] bytes = s.getBytes();
-        MessageDigest messagedigest = null;
+    public static byte[] getBytesMd5(byte[] buffer) {
+        byte[] result = null;
         try {
-            messagedigest = MessageDigest.getInstance("MD5");
-        } catch (NoSuchAlgorithmException e) {
-            ;
-            return null;
+            result =  MessageDigest.getInstance("MD5").digest(buffer);
+        } catch (Exception e) {
         }
-        messagedigest.update(bytes);
-        return bytesGetMD5String(messagedigest.digest());
+        return result;
     }
     /**
-     * 获取字节的md5->16进制字符串
-     * @param bytes
+     * 获取一段字节数组的md5
+     * @param buffer
      * @return
      */
-    public static String bytesGetMD5String(byte[] bytes) {
-        return byteArrayToHexString(bytes);
-    }
-    /**
-     * byte->16进制
-     * @param bytes
-     * @return
-     */
-    private static String byteArrayToHexString(byte bytes[]) {
-        return byteArrayToHexString(bytes, 0, bytes.length);
-    }
-    /**
-     * 截取一段byte变16进制字符串
-     * @param bytes
-     * @param m
-     * @param n
-     * @return
-     */
-    private static String byteArrayToHexString(byte bytes[], int m, int n) {
-        StringBuffer stringbuffer = new StringBuffer(2 * n);
-        int k = m + n;
-        for (int l = m; l < k; l++) {
-            appendHexPair(bytes[l], stringbuffer);
+    public static byte[] getBytesMd5(byte[] buffer,int offset,int len) {
+        byte[] result = null;
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            md.update(buffer,offset,len);
+            result =  md.digest();
+        } catch (Exception e) {
         }
-        return stringbuffer.toString();
+        return result;
     }
-    private static void appendHexPair(byte bt, StringBuffer stringbuffer) {
-        char c0 = hexDigits[(bt & 0xf0) >> 4];
-        char c1 = hexDigits[bt & 0xf];
-        stringbuffer.append(c0);
-        stringbuffer.append(c1);
+    public static String getBytesMd5ByString(byte[] buffer){
+        return byteToHexString(getBytesMd5(buffer));
+    }
+    public static String getBytesMd5ByString(byte[] buffer,int offset,int len){
+        return byteToHexString(getBytesMd5(buffer,offset,len));
+    }
+    /**
+     * byte->16进制字符串
+     * @param bytes
+     * @return
+     */
+    public static String byteToHexString(byte[] bytes) {
+        StringBuffer hexStr = new StringBuffer();
+        int num;
+        for (int i = 0; i < bytes.length; i++) {
+            num = bytes[i];
+            if(num < 0) {
+                num += 256;
+            }
+            if(num < 16){
+                hexStr.append("0");
+            }
+            hexStr.append(Integer.toHexString(num));
+        }
+        return hexStr.toString().toUpperCase();
     }
 
     /**
-     * 比较MD5
+     * 比较MD5字节数组
      * @param digesta
      * @param digestb
      * @return
@@ -133,13 +128,34 @@ public class MD5Util {
             MessageDigest messagedigest = MessageDigest.getInstance("MD5");
             return messagedigest.isEqual(digesta,digestb);
         } catch (NoSuchAlgorithmException e) {
-            ;
         }
-
         return false;
     }
-    public static boolean isEqualFileMd5(File src,File desr){
-        return isEqualMD5(getFileMD5Bytes(src),getFileMD5Bytes(desr));
+
+    public static boolean isEqualFileMd5(File src,File dest){
+        return isEqualMD5(getFileMd5(src), getFileMd5(dest));
+    }
+
+    //Mark Adler发明的adler-32算法
+    public static  String adler32Hex(byte[] data){
+        int a =1,b = 0;
+        for (int index = 0; index < data.length; ++index)
+        {
+            a = (a + data[index]) % 65521;
+            b = (b + a) % 65521;
+        }
+        return Integer.toHexString((b << 16) | a);
+    }
+
+    //Mark Adler发明的adler-32算法
+    public static  String adler32Hex(byte[] data,int offset,int len){
+        int a =1,b = 0;
+        for (int index = offset; index < len; ++index)
+        {
+            a = (a + data[index]) % 65521;
+            b = (b + a) % 65521;
+        }
+        return Integer.toHexString((b << 16) | a);
     }
 
 }

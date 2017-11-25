@@ -1,7 +1,5 @@
 package com.winone.ftc.mentity.mbean.entity;
 
-import m.tcps.p.CommunicationAction;
-
 /**
  * Created by user on 2017/6/24.
  */

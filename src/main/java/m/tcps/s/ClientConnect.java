@@ -1,10 +1,8 @@
 package m.tcps.s;
 
-import com.winone.ftc.mtools.Log;
 import m.tcps.p.*;
 
 import java.io.IOException;
-import java.net.StandardSocketOptions;
 import java.nio.channels.AsynchronousSocketChannel;
 
 /**
@@ -13,24 +11,21 @@ import java.nio.channels.AsynchronousSocketChannel;
  */
 public class ClientConnect implements SocketImp{
     private FtcSocketServer server;
-    //管道
+    //与某一个客户端的管道
     private AsynchronousSocketChannel socket;
     //与客户端的 会话
     private ClientSession session;
     //通讯实现对象
-    private CommunicationAction cAction;
+    private FtcTcpActions cAction;
 
     //当前使用的 监听读取 数据对象
-    private SessionBean readBean;
+    private SessionContentStore readBean;
 
     public ClientConnect(FtcSocketServer server) {
         this.server = server;
     }
 
-    public ClientConnect setCommunicationAction(CommunicationAction cAction){
-        this.cAction = cAction;
-        return this;
-    }
+
     @Override
     public AsynchronousSocketChannel getSocket() {
         return socket;
@@ -41,7 +36,7 @@ public class ClientConnect implements SocketImp{
     }
     public ClientConnect initial(){
         server.add(this);
-        session = new ClientSession(this);
+        session = new ClientSession(server,this);
         cAction.connectSucceed(session);
         return this;
     }
@@ -51,9 +46,19 @@ public class ClientConnect implements SocketImp{
     }
 
     @Override
-    public CommunicationAction getCommunication() {
+    public FtcTcpActions getAction() {
         return cAction;
     }
+
+    @Override
+    public void setAction(FtcTcpActions action) {
+        this.cAction = action;
+    }
+    public ClientConnect setAction(FtcTcpActionsAdapter action) {
+        this.cAction = action;
+        return this;
+    }
+
     @Override
     public void close(){
         try {
@@ -86,17 +91,25 @@ public class ClientConnect implements SocketImp{
     }
 
     @Override
-    public Op getOp() {
-        if (session!=null) return session.getOp();
+    public String getInfo() {
+
+        try {
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append("\t");
+            stringBuilder.append("本地:服务端(  ");
+            stringBuilder.append(socket.getLocalAddress().toString());
+            stringBuilder.append(" )");
+            stringBuilder.append("<------------> ");
+            stringBuilder.append("远程:客户端(  ");
+            stringBuilder.append(socket.getRemoteAddress());
+            stringBuilder.append("  )");
+            return stringBuilder.toString();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         return null;
     }
 
-    @Override
-    public SockServer getServer() {
-        return server;
-    }
-    public CommunicationAction getCommunicationAction() {
-        return cAction;
-    }
 
 }

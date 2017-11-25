@@ -141,7 +141,7 @@ public class UDPFileTaskThread extends Thread {
             }
         }
         Log.i("退出循环监听..."+(System.currentTimeMillis() - time)+" 毫秒.");
-        boolean flag = MD5Util.isEqualMD5(fileMd5,MD5Util.getFileMD5Bytes(loadFileTempPath.toFile()));
+        boolean flag = MD5Util.isEqualMD5(fileMd5,MD5Util.getFileMd5(loadFileTempPath.toFile()));
         Log.i("任务全部结束,文件 对比结果: "+ flag);
         if (flag){
             Log.i("从命名: "+ loadFileTempPath.toFile().renameTo(loadFilePath.toFile()));

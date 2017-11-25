@@ -1,6 +1,5 @@
 package m.tcps.c;
 
-import com.winone.ftc.mtools.Log;
 import m.tcps.p.*;
 
 import java.io.IOException;
@@ -9,7 +8,7 @@ import java.net.StandardSocketOptions;
 import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
-import java.util.concurrent.ExecutorService;
+import java.util.List;
 import java.util.concurrent.Executors;
 /**
  * Created by user on 2017/7/8.
@@ -18,23 +17,20 @@ import java.util.concurrent.Executors;
  * 3 接受数据
  *
  */
-public class FtcSocketClient implements SocketImp, CompletionHandler<Void, Void> {
+public class FtcSocketClient implements SocketImp, CompletionHandler<Void, Void>,FtcTcpAioManager{
     //重新连接时间
     private final int RECONNECT_TIME;
     public AsynchronousSocketChannel socket;
-
     private InetSocketAddress localAddress;
     private AsynchronousChannelGroup asynchronousChannelGroup;
-
     private boolean isConnected;
     private InetSocketAddress serverAddress;
-    private CommunicationAction communicationAction;
-    private final SessionBean readBean = new SessionBean(1);
+    private FtcTcpActions communicationAction;
     private final ServerSession session = new ServerSession(this);//读取写入
-    public FtcSocketClient(InetSocketAddress serverAddress, CommunicationAction communicationAction) {
+    public FtcSocketClient(InetSocketAddress serverAddress, FtcTcpActions communicationAction) {
         this(null,serverAddress,communicationAction,3000);
     }
-    public FtcSocketClient(InetSocketAddress localAddress,InetSocketAddress serverAddress, CommunicationAction communicationAction,int reTime) {
+    public FtcSocketClient(InetSocketAddress localAddress, InetSocketAddress serverAddress, FtcTcpActions communicationAction, int reTime) {
         this.localAddress = localAddress;
         this.RECONNECT_TIME = reTime;
         this.serverAddress = serverAddress;
@@ -44,6 +40,7 @@ public class FtcSocketClient implements SocketImp, CompletionHandler<Void, Void>
     //连接服务器
     public void connectServer(){
         try {
+            if (isClose) return;
             if (isAlive()) return;
                 if (asynchronousChannelGroup==null){
                     asynchronousChannelGroup =AsynchronousChannelGroup.withThreadPool(Executors.newSingleThreadExecutor());
@@ -67,7 +64,7 @@ public class FtcSocketClient implements SocketImp, CompletionHandler<Void, Void>
         isConnected = true;
 //        Log.i("成功连接 - "+serverAddress,",启动数据读取...");
         communicationAction.connectSucceed(session);
-        session.read(readBean);
+        session.read();
     }
 
     @Override
@@ -75,12 +72,12 @@ public class FtcSocketClient implements SocketImp, CompletionHandler<Void, Void>
 //        throwable.printStackTrace();
         communicationAction.error(session,throwable,null);
         //重新连接
-        reConnection();
+            reConnection();
     }
     /**
      * 重新连接
      */
-    public void reConnection() {
+    private void reConnection() {
         closeConnect();
         try {
             Thread.sleep(RECONNECT_TIME);
@@ -89,7 +86,7 @@ public class FtcSocketClient implements SocketImp, CompletionHandler<Void, Void>
         connectServer();
     }
 
-    public void closeConnect() {
+    private void closeConnect() {
         if (socket==null) return;
         try {
 //            asynchronousChannelGroup.shutdown();
@@ -102,7 +99,7 @@ public class FtcSocketClient implements SocketImp, CompletionHandler<Void, Void>
 //            asynchronousChannelGroup=null;
             socket = null;
             isConnected = false;
-            readBean.close();
+            session.close();
             communicationAction.connectClosed(session);
         }
     }
@@ -120,12 +117,19 @@ public class FtcSocketClient implements SocketImp, CompletionHandler<Void, Void>
     }
 
     @Override
-    public CommunicationAction getCommunication() {
+    public FtcTcpActions getAction() {
         return communicationAction;
     }
 
     @Override
+    public void setAction(FtcTcpActions action) {
+        //pass
+    }
+    //主动关闭
+    boolean isClose = false;
+    @Override
     public void close() {
+        isClose = true;
         closeConnect();
     }
 
@@ -140,13 +144,37 @@ public class FtcSocketClient implements SocketImp, CompletionHandler<Void, Void>
     }
 
     @Override
-    public Op getOp() {
-        return session.getOp();
+    public String getInfo() {
+        try {
+            StringBuilder stringBuilder = new StringBuilder();
+            stringBuilder.append("\t");
+            stringBuilder.append("本地:客户端(  ");
+            stringBuilder.append(socket.getLocalAddress().toString());
+            stringBuilder.append(" )");
+            stringBuilder.append("<------------> ");
+            stringBuilder.append("远程:服务端(  ");
+            stringBuilder.append(socket.getRemoteAddress());
+            stringBuilder.append("  )");
+            return stringBuilder.toString();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
+    @Override
+    public FtcTcpAioManager getFtcTcpManager() {
+        return null; //不实现
     }
 
     @Override
-    public SockServer getServer() {
-        //客户端获取不到客户端对象
-        return null;
+    public List<SocketImp> getCurrentClientList() {
+        return null;//不实现
+    }
+
+    @Override
+    public int getCurrentClientSize() {
+        return 0;//不实现
     }
 }

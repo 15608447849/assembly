@@ -16,7 +16,7 @@ public class Log {
     private static String LOG_FILE_FILE = "info.log";
     private static String PROGRESS_LOG_FILE_FILE = "progress.log";
     private static String OTHER_LOG_FILE_FILE = "other.log";
-    private static final SimpleDateFormat format = new SimpleDateFormat("[yyyy-MM-dd HH:mm:ss]");//:ms
+    private static final SimpleDateFormat format = new SimpleDateFormat("[yyyy-MM-dd HH:mm:ss:ms]");//
     private static boolean print = true;
     private static boolean isStartWriteFile = false;
     public static void setPrint(boolean isPrint){
@@ -45,6 +45,15 @@ public class Log {
         }else{
             writeLogWrite2(TAG +"   "+ message);
         }
+    }
+
+    public static void println(Object... arr){
+        StringBuilder stringBuilder = new StringBuilder();
+        for(Object  obj : arr){
+            stringBuilder.append(obj);
+        }
+        System.out.println(TAG + getTimeString(0)+">>\n\t"+ stringBuilder.toString()+"\n");
+
     }
 
     public static void i(String message){

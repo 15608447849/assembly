@@ -137,7 +137,7 @@ public class TaskUtils {
             String path = getLocalFile(task);
             File file = new File(path);
             long length = file.length();
-            String md5 = MD5Util.bytesGetMD5String(MD5Util.getFileMD5Bytes(file));
+            String md5 = MD5Util.byteToHexString(MD5Util.getFileMd5(file));
             DownloadFileRecordSql.get().addRecord(md5,url,path,0,length,length);
         } catch (Exception e) {
         }
@@ -160,7 +160,7 @@ public class TaskUtils {
             //如果传入MD5 ,判断md5 与 本地文件MD5是否相同
             if (!StringUtil.isEntry(task.getDownFileMd5())){
                 try {
-                    if (MD5Util.getFileMD5String(file).equalsIgnoreCase(task.getDownFileMd5())){
+                    if (MD5Util.getFileMd5ByString(file).equalsIgnoreCase(task.getDownFileMd5())){
                         //不覆盖
                         state.setState(1);
                         state.setRecord(true);

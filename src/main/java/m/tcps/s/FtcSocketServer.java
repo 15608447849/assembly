@@ -1,16 +1,14 @@
 package m.tcps.s;
 
 import com.winone.ftc.mtools.Log;
-import com.winone.ftc.mtools.NetworkUtil;
-import m.tcps.p.CommunicationAction;
-import m.tcps.p.SockServer;
+
+import m.tcps.p.FtcTcpActions;
+import m.tcps.p.FtcTcpAioManager;
 import m.tcps.p.SocketImp;
 
 import java.io.IOException;
 
 import java.net.InetSocketAddress;
-import java.net.SocketOption;
-import java.net.SocketOptions;
 import java.net.StandardSocketOptions;
 import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.AsynchronousServerSocketChannel;
@@ -24,17 +22,14 @@ import java.util.concurrent.Executors;
  * Created by user on 2017/7/8.
  * aio 实现
  */
-public class FtcSocketServer implements SockServer,CompletionHandler<AsynchronousSocketChannel, ClientConnect> {
+public class FtcSocketServer implements CompletionHandler<AsynchronousSocketChannel, ClientConnect>,FtcTcpAioManager {
     //监听本地地址信息
     private InetSocketAddress address;
     //异步连接socket
     private AsynchronousServerSocketChannel listener;
-
-    private CommunicationAction action;
-
+    private FtcTcpServerActions action;
     private final LinkedList<SocketImp> clientConnectList = new LinkedList<>();
-
-    public FtcSocketServer(InetSocketAddress address,CommunicationAction action) {
+    public FtcSocketServer(InetSocketAddress address,FtcTcpServerActions action) {
         this.address = address;
         this.action = action;
     }
@@ -44,13 +39,13 @@ public class FtcSocketServer implements SockServer,CompletionHandler<Asynchronou
     public FtcSocketServer openListener() throws IOException{
         listener = AsynchronousServerSocketChannel.open(AsynchronousChannelGroup.withThreadPool(Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()))).bind(address);
         listener.setOption(StandardSocketOptions.SO_REUSEADDR,true);
-        Log.i("TCP SERVER LISTEN : "+ listener.getLocalAddress());
+        Log.println("TCP SERVER LISTEN : ", listener.getLocalAddress());
         return this;
     }
     //开始接入
     public FtcSocketServer launchAccept(){
         if (listener!=null && listener.isOpen()){
-            listener.accept(new ClientConnect(this).setCommunicationAction(action),this); //接受一个连接
+            listener.accept(new ClientConnect(this).setAction(action),this); //接受一个连接
         }
         return this;
     }
@@ -67,6 +62,12 @@ public class FtcSocketServer implements SockServer,CompletionHandler<Asynchronou
         throwable.printStackTrace();
         launchAccept();
     }
+
+    @Override
+    public FtcTcpAioManager getFtcTcpManager() {
+        return this;
+    }
+
     @Override
     public List<SocketImp> getCurrentClientList(){
         return clientConnectList;

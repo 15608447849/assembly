@@ -159,7 +159,7 @@ public class LANManage {
     public boolean addFileTask(byte[] fileMd5, UDPFileTaskThread udpFileTask) {
         try {
             lock.lock();
-            String md5 = MD5Util.bytesGetMD5String(fileMd5);
+            String md5 = MD5Util.byteToHexString(fileMd5);
             if (taskMap.containsKey(md5)) return false;
             taskMap.put(md5,udpFileTask);
             return true;
@@ -176,7 +176,7 @@ public class LANManage {
     public UDPFileTaskThread getFileTask(byte[] fileMd5) {
         try {
             lock.lock();
-            String md5 = MD5Util.bytesGetMD5String(fileMd5);
+            String md5 = MD5Util.byteToHexString(fileMd5);
             if (taskMap.containsKey(md5)){
                 return taskMap.get(md5);
             }

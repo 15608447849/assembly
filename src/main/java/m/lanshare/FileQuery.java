@@ -53,7 +53,7 @@ public class FileQuery extends SimpleFileVisitor<Path> {
 
     private boolean equalsMD5(File file, byte[] queryFileMD5) {
         try {
-            byte[] fileMD5 = MD5Util.getFileMD5Bytes(file);
+            byte[] fileMD5 = MD5Util.getFileMd5(file);
             return Arrays.equals(fileMD5,queryFileMD5);
         } catch (Exception e) {
 

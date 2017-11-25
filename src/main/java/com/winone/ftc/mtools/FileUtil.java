@@ -21,6 +21,24 @@ public class FileUtil {
     public static final String SEPARATOR = "/";//File.separator;
     private static byte[] ENDFD = "\n".getBytes();
 
+    /**
+     * 替换文件分隔符,检测文件前缀或后缀
+     */
+    public static String replaceFileSeparatorAndCheck(String path,String prefix,String suffix){
+        path = path.replace("\\",SEPARATOR);
+        if (!StringUtil.isEntry(prefix)){
+            if (path.startsWith(prefix)){
+                path = path.substring(1);
+            }
+        }
+        if (!StringUtil.isEntry(suffix)){
+            if (path.endsWith(suffix)){
+                path = path.substring(0,path.length()-1);
+            }
+        }
+        return  path;
+    }
+
     /**检查目录 存在返回true*/
     public static boolean checkDir(String dir){
         File dirs = new File(dir);
@@ -84,18 +102,21 @@ public class FileUtil {
         }
 
     }
-    //从命名
+    //从命名 不会删除源文件,需要自行判断决定是否删除
     public static boolean rename(File sourceFile,File targetFile){
         try {
-
             if (sourceFile.renameTo(targetFile)){
+                Log.println(sourceFile," -> "+ targetFile);
                 return true;
             }else{
+                Log.println(sourceFile," -> "+ targetFile+", error");
                 if (copyFile(sourceFile, targetFile)){
+                    Log.println("try: "+ sourceFile," -> "+ targetFile);
                     return true;
                 }
             }
         } catch (Exception e) {
+            e.printStackTrace();
         }
         return false;
     }
@@ -111,6 +132,7 @@ public class FileUtil {
             out.close();
             in.close();
 //            Log.i("启动文件复制: "+ source+ " - "+ target+" 成功.");
+
             return true;
         }  catch (IOException e) {
             e.printStackTrace();
@@ -345,4 +367,14 @@ public class FileUtil {
             return file.getAbsolutePath();
         }
     }
+
+
+
+
+
+
+
+
+
+
 }

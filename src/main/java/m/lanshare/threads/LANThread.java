@@ -74,7 +74,7 @@ public class LANThread extends Thread{
             byte[] filePath = new byte[buffer.remaining()];
             buffer.get(filePath);
             String filePathStr = new String(filePath,"UTF-8");
-            Log.i("文件路径: "+ filePathStr+" 文件MD5:"+ MD5Util.bytesGetMD5String(fileMd5)+" 文件大小:"+fileSize);
+            Log.i("文件路径: "+ filePathStr+" 文件MD5:"+ MD5Util.byteToHexString(fileMd5)+" 文件大小:"+fileSize);
             //开始一个局域网广播,收集局域网是否存在文件.
             new UDPFileTaskThread(fileMd5,fileSize,filePathStr,manager);
         }
@@ -84,7 +84,7 @@ public class LANThread extends Thread{
             byte[] fileMd5 = new byte[16];
             buffer.get(fileMd5);
             long fileSize = buffer.getLong();
-            Log.i("本地查询MD5: "+ MD5Util.bytesGetMD5String(fileMd5)+" ,文件大小:"+fileSize);
+            Log.i("本地查询MD5: "+ MD5Util.byteToHexString(fileMd5)+" ,文件大小:"+fileSize);
             new FileQueryThread(fileMd5,fileSize,address,manager);
         }
         if (command == 30){
@@ -104,7 +104,7 @@ public class LANThread extends Thread{
             Log.i("收到一个传输请求:");
             byte[] fileMd5 = new byte[16];
             buffer.get(fileMd5);
-            Log.i("[ "+address+" ] 任务名: "+ MD5Util.bytesGetMD5String(fileMd5));
+            Log.i("[ "+address+" ] 任务名: "+ MD5Util.byteToHexString(fileMd5));
 
             new ServerCommunication(address,fileMd5,channel,manager);
         }

@@ -8,19 +8,7 @@ import com.winone.ftc.mentity.mbean.entity.Task;
 import com.winone.ftc.mentity.mbean.entity.TaskFactory;
 
 import com.winone.ftc.mtools.Log;
-import com.winone.ftc.mtools.NetworkUtil;
 
-import m.tcps.c.FtcSocketClient;
-import m.tcps.p.CommunicationAction;
-import m.tcps.p.Op;
-import m.tcps.p.Session;
-import m.tcps.p.SocketImp;
-import m.tcps.s.FtcSocketServer;
-
-import java.io.IOException;
-
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.util.*;
 
 public class Main{
@@ -283,75 +271,8 @@ public class Main{
 //                        false));
     }
 
-    private static void cli() {
-        FtcSocketClient client = new FtcSocketClient(new InetSocketAddress("172.16.0.200", 65000), new CommunicationAction() {
-            @Override
-            public void connectSucceed(Session session) {
-                Log.i("连接成功:"+ session.getSocket());
-            }
-            @Override
-            public void receiveString(Session session, Op operation, String message) {
-                Log.i("收到服务器消息: "+ message);
-            }
 
-            @Override
-            public void connectClosed(Session session) {
 
-            }
-
-            @Override
-            public void error(Session session, Throwable throwable, Exception e) {
-
-            }
-        });
-        client.connectServer();
-        while (true);
-    }
-
-    private static void ser() {
-            ManagerImp.get().initial(new ManagerParams(false,true,false));
-        try {
-//            NetworkUtil.getLocalIPInet();
-            List<InetAddress> list = NetworkUtil.getLocalIPInetList();
-
-            for (InetAddress ip : list){
-                InetSocketAddress address = new InetSocketAddress(ip,65000);
-                FtcSocketServer socketServer = new FtcSocketServer(address,(new CommunicationAction() {
-                    @Override
-                    public void connectSucceed(Session session) {
-                        Log.i("收到一个连接: "+ session.getSocket() + " - "+ session.getServer().getCurrentClientSize());
-                    }
-
-                    @Override
-                    public void receiveString(Session session, Op operation, String message) {
-                        Log.i("收到消息: "+ message);
-                        operation.writeString(message);
-                        if (message.equals("close_all")){
-                            List<SocketImp> socketImps = session.getServer().getCurrentClientList();
-                            for (SocketImp socketImp:socketImps){
-                                socketImp.close();
-                            }
-                        }
-                    }
-
-                    @Override
-                    public void connectClosed(Session session) {
-                        Log.i("关闭一个连接: "+ session.getSocket()+ " - "+ session.getServer().getCurrentClientSize());
-                    }
-
-                    @Override
-                    public void error(Session session, Throwable throwable, Exception e) {
-                        throwable.printStackTrace();
-                    }
-                })).openListener().launchAccept();
-            }
-
-        } catch (IOException e) {
-            Log.i("启动TCP服务器失败.");
-        }
-
-        while (true);
-    }
 
 
 

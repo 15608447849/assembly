@@ -6,18 +6,15 @@ import java.nio.ByteBuffer;
 /**
  * Created by user on 2017/7/8.
  */
-public class MyBuffer {
+public class FtcBuffer {
 
     public static int OUT_OF_DATE_LIMIT = 5 * 1000; //15秒
     private ByteBuffer buffer;
-
     private long usedTime;//最近使用时间大于规定时间,清理这个buf
-    private int tag = 0; //0临时 1 不可被清理
-    protected MyBuffer(int size) {
+    private int tag = 0; //0临时 1不可被清理
+    protected FtcBuffer(int size) {
         this.buffer = ByteBuffer.allocate(size);
     }
-
-
     public ByteBuffer flipBuf(){
         if (buffer!=null){
             buffer.flip();
@@ -25,17 +22,13 @@ public class MyBuffer {
         }
         return buffer;
     }
-
     public ByteBuffer clearBuf(){
-
         if (buffer!=null){
             buffer.clear();
             updateUsedTime();
         }
         return buffer;
     }
-
-
     public ByteBuffer compactBuf(){
         if (buffer!=null){
             buffer.compact();
@@ -43,8 +36,6 @@ public class MyBuffer {
         }
         return buffer;
     }
-
-
     public void clear(){
         if (buffer!=null){
             buffer.clear();
@@ -55,8 +46,6 @@ public class MyBuffer {
     public ByteBuffer getBuf() {
             return buffer;
     }
-
-
     public void updateUsedTime(){
         if (isNotClearPower()) return;
         usedTime = System.currentTimeMillis();
@@ -69,7 +58,6 @@ public class MyBuffer {
     protected boolean isOutOfDate(){
         return (System.currentTimeMillis() - usedTime)> OUT_OF_DATE_LIMIT;
     }
-
     /**
      * 获取缓冲区大小
      * @return
@@ -82,10 +70,13 @@ public class MyBuffer {
         return tag;
     }
 
+    /**
+     *
+     * @param tag 0临时 1不可被清理
+     */
     public void setTag(int tag) {
         this.tag = tag;
     }
-
     /**
      * 是否允许被清理
      */

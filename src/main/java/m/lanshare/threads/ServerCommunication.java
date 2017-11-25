@@ -95,8 +95,8 @@ public class ServerCommunication extends PThread{
                     try {
                         String s = new String(data,"UTF-8");
                         translate.filePath = Paths.get(s);
-                        byte[] dataMd5 = MD5Util.getFileMD5Bytes( translate.filePath.toFile(),translate.startPos,translate.endPos);
-                        Log.i("获取数据片段MD5: "+MD5Util.bytesGetMD5String(dataMd5)+" fileSize:"+ translate.filePath.toFile().length());
+                        byte[] dataMd5 = MD5Util.getFileMd5( translate.filePath.toFile(),translate.startPos,translate.endPos);
+                        Log.i("获取数据片段MD5: "+MD5Util.byteToHexString(dataMd5)+" fileSize:"+ translate.filePath.toFile().length());
                         buffer.clear();
                         buffer.put(Prog.sendDataInfoResp);
                         buffer.put(dataMd5);
