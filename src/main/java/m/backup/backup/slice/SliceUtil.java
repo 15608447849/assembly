@@ -6,13 +6,13 @@ import com.winone.ftc.mtools.MD5Util;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.text.NumberFormat;
 import java.util.*;
 
 /**
  * Created by user on 2017/11/24.
  */
 public class SliceUtil {
-    public static final int SLICE_BLOCK_SIZE = 1024; //切片大小
 
     private static void close(RandomAccessFile r){
         try {
@@ -21,15 +21,22 @@ public class SliceUtil {
         }
     }
 
+    public static int sliceSizeConvert(long fileSize){
+        //按照  (512 / 100*1024*2) >> (0.025) 的比例换算
+        return (int) (fileSize *  0.025);
+    }
+
+
+
     /**
      * 对文件分片,返回分片信息
      * @param file
      * @return
      */
-    public static ArrayList<SliceInfo> fileSliceInfos(File file){
+    public static ArrayList<SliceInfo> fileSliceInfoList(File file,int sliceSize){
         long fileSize = file.length();
-        long sliceSum = fileSize / SLICE_BLOCK_SIZE;
-        int mod = (int) (fileSize % SLICE_BLOCK_SIZE);
+        long sliceSum = fileSize / sliceSize;
+        int mod = (int) (fileSize % sliceSize);
         if (mod>0){
             sliceSum+=1;
         }
@@ -39,10 +46,10 @@ public class SliceUtil {
             ArrayList<SliceInfo> sliceList = new ArrayList<>();
             int len;
             long position = 0;
-            byte[] buffer  = new byte[SLICE_BLOCK_SIZE];;
+            byte[] buffer  = new byte[sliceSize];
             SliceInfo sliceInfo;
             for(int i = 0 ; i < sliceSum;i++ ){
-                len = (int) Math.min(SLICE_BLOCK_SIZE,(randomAccessFile.length()-position));
+                len = (int) Math.min(sliceSize,(randomAccessFile.length()-position));
 
                 randomAccessFile.seek(position);
                 randomAccessFile.read(buffer,0,len);
@@ -53,7 +60,7 @@ public class SliceUtil {
                 sliceInfo.setAdler32Hex(MD5Util.adler32Hex(buffer,0,len));
                 sliceInfo.setMd5Hex(MD5Util.getBytesMd5ByString(buffer,0,len));
                 sliceList.add(sliceInfo);
-                position += SLICE_BLOCK_SIZE;
+                position += sliceSize;
             }
             return sliceList;
         }catch (IOException e){
@@ -83,7 +90,7 @@ public class SliceUtil {
      * @param file
      * @return
      */
-    public static SliceScrollResult scrollCheck(Hashtable<String, LinkedList<SliceInfo>> table, File file) {
+    public static SliceScrollResult scrollCheck(Hashtable<String, LinkedList<SliceInfo>> table, File file,int sliceSize) {
         RandomAccessFile randomAccessFile = null;
         try{
             randomAccessFile = new RandomAccessFile(file, "r");
@@ -91,7 +98,7 @@ public class SliceUtil {
             int len = 0;
             long position = 0;
             boolean moveBlock = false;
-            byte[] buf = new byte[SLICE_BLOCK_SIZE];
+            byte[] buf = new byte[sliceSize];
             String adler32Hex;
             Iterator<Map.Entry<String,LinkedList<SliceInfo>>> iterator;
             Map.Entry<String,LinkedList<SliceInfo>> entry;
@@ -105,7 +112,7 @@ public class SliceUtil {
             while(true){
 
                 moveBlock = false;
-                len = (int) Math.min(SLICE_BLOCK_SIZE,(fileLength-position));
+                len = (int) Math.min(sliceSize,(fileLength-position));
                 if (len<1) {
 
                     break;
@@ -115,7 +122,7 @@ public class SliceUtil {
                 randomAccessFile.read(buf,0,len);
 
                 adler32Hex = MD5Util.adler32Hex(buf,0,len);
-//                Log.println("滚动检测: "+ new String(buf,0,len)+" , "+ adler32Hex+" - "+ len);
+                Log.println("滚动检测: ", position ," , " +fileLength," ", NumberFormat.getInstance().format((double)position/(double)fileLength * 100),"%");
                 iterator = table.entrySet().iterator();
                 while (iterator.hasNext()){
                     entry = iterator.next();
@@ -145,7 +152,7 @@ public class SliceUtil {
                 }
 
                 if (moveBlock){
-                    position+=SLICE_BLOCK_SIZE;//向后移动一块数据
+                    position+=sliceSize;//向后移动一块数据
                 }else{
                     position++; //向后偏移一字节
                 }

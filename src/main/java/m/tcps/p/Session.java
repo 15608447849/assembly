@@ -1,8 +1,8 @@
 package m.tcps.p;
 
+
 import com.winone.ftc.mtools.Log;
-import m.bytebuffs.FtcBuffer;
-import m.bytebuffs.FtcBufferPool;
+import sun.nio.ch.DirectBuffer;
 
 import java.net.SocketException;
 import java.nio.ByteBuffer;
@@ -11,33 +11,34 @@ import java.nio.channels.CompletionHandler;
 import java.util.concurrent.Future;
 
 
-
 /**
  * Created by user on 2017/7/8.
  * 通讯会话
  */
-public abstract class Session implements CompletionHandler<Integer, FtcBuffer>{
+public abstract class Session implements CompletionHandler<Integer, ByteBuffer>{
 
     private final FtcTcpAioManager ftcTcpManager;
     private SocketImp socketImp;
+
+    private final SessionContentStore sessionContentStore;//接受数据存储
     private final SessionOperation operation;
-    private final SessionContentHandle sessionHandle;
-    private final SessionContentStore sessionContentStore;//接受数据存储 -
+    private SessionContentHandle sessionHandle;
     private long send_sum,recv_sum;
-    private static final int BUFFER_SIZE = 1024*16;//缓冲区大小
+
 
     public Session(FtcTcpAioManager manager,SocketImp connect) {
         this.ftcTcpManager = manager;
         this.socketImp = connect;
+        this.sessionContentStore = new SessionContentStore();
         this.operation = new SessionOperation(this);
-        this.sessionHandle = new SessionContentHandle(this);
-        this.sessionContentStore = new SessionContentStore(this);
+
     }
     //系统读取到信息 回调到这里
     @Override
-    public void completed(Integer integer, FtcBuffer buffer) {
+    public void completed(Integer integer, ByteBuffer buffer) {
         recv_sum+=integer;
-        Log.println("总接收: "+ recv_sum);
+//        Log.println("总接收: "+ recv_sum+" - "+ buffer);
+//        Log.println("接收: "+ integer+" - "+ buffer);
         if (!socketImp.isAlive()) return;
         if (integer == -1){
             SocketException socketException = new SocketException("socket connect is close.");
@@ -46,13 +47,17 @@ public abstract class Session implements CompletionHandler<Integer, FtcBuffer>{
             return;
         }
         if (integer>0){
+            if (sessionHandle==null){
+                sessionHandle = new SessionContentHandle(this);
+            }
             sessionContentStore.storeBuffer(buffer);
+
         }
         read();
     }
 
     @Override
-    public void failed(Throwable throwable, FtcBuffer buffer) {
+    public void failed(Throwable throwable, ByteBuffer buffer) {
         socketImp.getAction().error(this,throwable,null);
         socketImp.ConnectError(throwable);
     }
@@ -62,26 +67,28 @@ public abstract class Session implements CompletionHandler<Integer, FtcBuffer>{
      */
     public void read(){
         try {
-            FtcBuffer buffer = FtcBufferPool.get().getBuffer(BUFFER_SIZE);
+            ByteBuffer buffer = sessionContentStore.getReadBufferBySystemTcpStack();
             if (buffer!=null && socketImp.isAlive()){
-                socketImp.getSocket().read( buffer.clearBuf(), buffer,this);//系统从管道读取数据
+                socketImp.getSocket().read(buffer, buffer,this);//系统从管道读取数据
             }
         } catch (Exception e) {
             socketImp.getAction().error(this,null,e);
         }
     }
+
     /**
      * 发送数据
      */
-    public void send(FtcBuffer buffer) {
+    public void send(ByteBuffer buffer) {
             try {
                 if (buffer!=null && socketImp.isAlive()){
-                  Future<Integer> future =  socketImp.getSocket().write(buffer.flipBuf()); //发送消息到管道
+                  buffer.flip();
+                  Future<Integer> future =  socketImp.getSocket().write(buffer); //发送消息到管道
                     while(true){
                         if (future.isDone()){
 //                            Log.println("send size : "+ future.get()+" , "+Thread.currentThread().getName());
                             send_sum+=future.get();
-                            Log.println("总发送 : "+ send_sum);
+//                            Log.println("总发送 : "+ send_sum);
                             break;
                         }
                     }
@@ -90,13 +97,27 @@ public abstract class Session implements CompletionHandler<Integer, FtcBuffer>{
                 e.printStackTrace();
                 socketImp.getAction().error(this,null,e);
             }
+    }
 
+    public void clear(){
+        //清理 剩余保存的数据 ,清理队里中已存在的数据
+        sessionContentStore.clear();
     }
     public void close(){
         //清理资源
+        clear();
+        //关闭处理读取消息的线程
+        if (sessionHandle!=null){
+            sessionHandle.close();
+            sessionHandle=null;
+        }
 
-        socketImp.close();
+        //关闭管道
+//        socketImp.close();
     }
+
+
+
     public SessionOperation getOperation(){return operation;}
     public AsynchronousSocketChannel getSocket(){
         return socketImp.getSocket();

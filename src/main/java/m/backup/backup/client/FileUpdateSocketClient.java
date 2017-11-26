@@ -2,7 +2,6 @@ package m.backup.backup.client;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.sun.org.apache.bcel.internal.generic.IF_ACMPEQ;
 
 import com.winone.ftc.mtools.Log;
 import m.backup.backup.imps.Protocol;
@@ -66,7 +65,7 @@ public class FileUpdateSocketClient  extends FtcTcpActionsAdapter{
     public void receiveString(Session session, String message) {
 
         Map<String,String> map = gson.fromJson(message,Map.class);
-        Log.println(flag," 收到服务器信息: ",map);
+        //Log.println(flag," 收到服务器信息: ",map);
         handle(map);
     }
 
@@ -94,7 +93,6 @@ public class FileUpdateSocketClient  extends FtcTcpActionsAdapter{
 
     //文件上传
     private void uploadFile() {
-        try {
             Log.println(flag,"  准备上传文件: ", cur_up_file);
             //1. 通知服务器, 发送文件 相对路径,文件名
             Map<String,String> map = new HashMap<>();
@@ -102,16 +100,14 @@ public class FileUpdateSocketClient  extends FtcTcpActionsAdapter{
             map.put("protocol", Protocol.C_FILE_BACKUP_QUEST);
             map.put("path",cur_up_file.getRel_path());
             map.put("filename",cur_up_file.getFileName());
-
+            map.put("block",String.valueOf(SliceUtil.sliceSizeConvert(cur_up_file.getFileLength())));
             socketClient.getSession().getOperation().writeString(gson.toJson(map),CHARSET);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     //处理
     private void handle(Map<String, String> map) {
         String protocol = map.get("protocol");
+        Log.println(flag,protocol);
         if (protocol.equals(Protocol.S_FILE_BACKUP_QUEST_ACK)){
             serverBackupQuestAck(map);
         }else if (protocol.equals(Protocol.S_FILE_BACKUP_TRS_OVER)){
@@ -123,6 +119,8 @@ public class FileUpdateSocketClient  extends FtcTcpActionsAdapter{
 
     //客户端文件请求回执
     private void serverBackupQuestAck(Map<String, String> map) {
+        int sliceSize = Integer.parseInt(map.remove("block"));
+
         String slice  = map.get("slice");
         if (slice.equals("Node")){
             //全量传输 0-末尾
@@ -134,8 +132,8 @@ public class FileUpdateSocketClient  extends FtcTcpActionsAdapter{
             //分组
             Hashtable<String,LinkedList<SliceInfo>> table = SliceUtil.sliceInfoToTable(list);
             //滚动检测
-            SliceScrollResult result  = SliceUtil.scrollCheck(table,new File(cur_up_file.getFullPath()));
-            Log.println(flag,result);
+            Log.println(flag,"文件片段滚动检测...");
+            SliceScrollResult result  = SliceUtil.scrollCheck(table,new File(cur_up_file.getFullPath()),sliceSize);
             if (result.getDifferentSize()>0){
                 map.put("translate","diff"); //差异传输
                 backup(map,result);
@@ -149,8 +147,6 @@ public class FileUpdateSocketClient  extends FtcTcpActionsAdapter{
                     backup(map,null);
                 }
             }
-
-
         }
     }
 
@@ -178,20 +174,27 @@ public class FileUpdateSocketClient  extends FtcTcpActionsAdapter{
             op.writeString(gson.toJson(map),CHARSET); //开始传输
 
             RandomAccessFile randomAccessFile = cur_up_file.getRandomAccessFile();
-            byte[]  buffer = new byte[1024];
-            int len = 0;
+            byte[]  buffer = new byte[1024*16];
+            int len;
             if (result==null){
                 //全部传输
+                Log.println(flag," 全量传输.");
                 randomAccessFile.seek(0);
                 while( ( len = randomAccessFile.read(buffer) )> 0){
 //                    Log.println(flag,"   传输..."+len +" : "+ Arrays.toString(buffer));
                     op.writeBytes(buffer,0,len);
+//                    try {
+//                        Thread.sleep(10000);
+//                    } catch (InterruptedException e) {
+//                        e.printStackTrace();
+//                    }
                 }
             }else{
                 //差异传输
+                Log.println(flag," 差异传输.");
                 long count = 0;
                 for (SliceMapper slice : result.getList_diff()){
-                    Log.println(flag,"   传输 "+slice);
+//                    Log.println(flag,"   传输 "+slice);
                     randomAccessFile.seek(slice.getPosition());
                     count = slice.getLength();
                     while (count>0){
@@ -205,9 +208,14 @@ public class FileUpdateSocketClient  extends FtcTcpActionsAdapter{
                 }
 
             }
+            map.remove("translate");
+            map.remove("different");
+            map.remove("same");
+            map.remove("length");
+
             map.put("protocol",C_FILE_BACKUP_TRS_END);
             //传输完成
-            op.writeString(gson.toJson(map),CHARSET); //开始传输
+            op.writeString(gson.toJson(map),CHARSET); //结束传输
             cur_up_file.clear();
         }catch (IOException e){
             e.printStackTrace();
@@ -216,6 +224,7 @@ public class FileUpdateSocketClient  extends FtcTcpActionsAdapter{
     }
     //传输完成
     private void transOver() {
+        socketClient.getSession().clear();
         clear();
     }
 

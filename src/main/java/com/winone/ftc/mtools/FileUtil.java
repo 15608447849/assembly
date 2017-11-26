@@ -106,12 +106,9 @@ public class FileUtil {
     public static boolean rename(File sourceFile,File targetFile){
         try {
             if (sourceFile.renameTo(targetFile)){
-                Log.println(sourceFile," -> "+ targetFile);
                 return true;
             }else{
-                Log.println(sourceFile," -> "+ targetFile+", error");
                 if (copyFile(sourceFile, targetFile)){
-                    Log.println("try: "+ sourceFile," -> "+ targetFile);
                     return true;
                 }
             }

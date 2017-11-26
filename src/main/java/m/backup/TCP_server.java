@@ -19,7 +19,7 @@ import java.net.InetSocketAddress;
  */
 public class TCP_server {
     public static void main(String[] args) throws IOException {
-        FtcBackupServer ftcBackupServer = new FtcBackupServer("C:\\FileServerDirs\\tests\\DIR_DES",new InetSocketAddress("127.0.0.1",5200));
+        FtcBackupServer ftcBackupServer = new FtcBackupServer("D:\\backup\\B",new InetSocketAddress("127.0.0.1",5200));
         while (true);
     }
 }

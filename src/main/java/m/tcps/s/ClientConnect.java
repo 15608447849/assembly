@@ -18,9 +18,6 @@ public class ClientConnect implements SocketImp{
     //通讯实现对象
     private FtcTcpActions cAction;
 
-    //当前使用的 监听读取 数据对象
-    private SessionContentStore readBean;
-
     public ClientConnect(FtcSocketServer server) {
         this.server = server;
     }

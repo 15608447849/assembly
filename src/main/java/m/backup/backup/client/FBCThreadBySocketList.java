@@ -21,10 +21,10 @@ class FBCThreadBySocketList extends FBCThread {
 
     @Override
     public void run() {
-        //间隔三十秒 ,检测队列中的socket连接, 使用时间>30秒, 移除连接
+        //间隔60秒 ,检测队列中的socket连接, 使用时间>30秒, 移除连接
         while (isRunning){
             try {
-                Thread.sleep(30 * 1000);
+                Thread.sleep(60 * 1000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -40,8 +40,8 @@ class FBCThreadBySocketList extends FBCThread {
                 Iterator<FileUpdateSocketClient> iterator = list.iterator();
                 while (iterator.hasNext()){
                     socket = iterator.next();
-                    //未使用并且闲置时间 >60秒. 停止连接并移除.
-                    if ( !socket.isUsing() && socket.isIdle(60*1000)){
+                    //未使用并且闲置时间 >30秒. 停止连接并移除.
+                    if ( !socket.isUsing() && socket.isIdle(30*1000)){
                         socket.close();
                         iterator.remove();
                     }

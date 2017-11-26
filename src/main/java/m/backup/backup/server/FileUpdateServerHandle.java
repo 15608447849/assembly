@@ -12,7 +12,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -32,15 +31,9 @@ public class FileUpdateServerHandle extends FtcTcpActionsAdapter {
 
     @Override
     public void receiveString(Session session, String message) {
-
-        Map<String,String> map = gson.fromJson(message,Map.class);
-        Log.println("接受消息: "+ map);
-        handle(map);
-        try {
-            session.getOperation().writeString(gson.toJson(map),map.get("charset"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+            Map<String,String> map = gson.fromJson(message,Map.class);
+            //Log.println("接受消息: "+ map);
+            handle(session,map);
     }
 
 
@@ -58,14 +51,18 @@ public class FileUpdateServerHandle extends FtcTcpActionsAdapter {
 
 
 
-    private void handle(Map<String, String> map) {
+    private void handle(Session session,Map<String, String> map) {
         String protocol = map.get("protocol");
+        try {
+            Log.println(session.getSocket().getRemoteAddress()," >> ",protocol);
+        } catch (IOException e) {
+        }
         if (protocol.equals(Protocol.C_FILE_BACKUP_QUEST)){
-            ClientFileBackupQuest(map);
+            ClientFileBackupQuest(session,map);
         }else if (protocol.equals(Protocol.C_FILE_BACKUP_TRS_START)){
             receiveFile(map);
         }else if (protocol.equals(Protocol.C_FILE_BACKUP_TRS_END)){
-            receiveFileOver(map);
+            receiveFileOver(session,map);
         }
     }
 
@@ -76,7 +73,7 @@ public class FileUpdateServerHandle extends FtcTcpActionsAdapter {
      * 客户端文件同步请求
      * @param map
      */
-    private void ClientFileBackupQuest(Map<String, String> map) {
+    private void ClientFileBackupQuest(Session  session,Map<String, String> map)  {
         String dir_path = ftcBackupServer.getDirectory()+map.get("path");
         map.put("protocol",Protocol.S_FILE_BACKUP_QUEST_ACK);
         String slice = "Node";
@@ -89,13 +86,16 @@ public class FileUpdateServerHandle extends FtcTcpActionsAdapter {
             File file = new File(dir_path+map.get("filename"));
             if (file.exists()){
                 //切片
-                ArrayList<SliceInfo> arrayList = SliceUtil.fileSliceInfos(file);
+                int sliceSize = Integer.parseInt(map.get("block"));
+                ArrayList<SliceInfo> arrayList = SliceUtil.fileSliceInfoList(file,sliceSize);
                 if (arrayList!=null){
                     slice = gson.toJson(arrayList);
                 }
             }
         }
         map.put("slice",slice);
+//        Log.println("处理分片完成-告知客户端信息中..");
+        session.getOperation().writeString(gson.toJson(map),map.get("charset"));
     }
 
 
@@ -122,6 +122,7 @@ public class FileUpdateServerHandle extends FtcTcpActionsAdapter {
             same_slice_list.clear();
             same_slice_list=null;
         }
+
 
     }
     //接受客户端发送的传输开始请求
@@ -174,7 +175,8 @@ public class FileUpdateServerHandle extends FtcTcpActionsAdapter {
     }
 
     //接受完成
-    private void receiveFileOver(Map<String, String> map) {
+    private void receiveFileOver(Session session,Map<String, String> map) {
+
         //获取备份后缀的文件
         String fs_path = ftcBackupServer.getDirectory()+map.get("path")+map.get("filename");
 
@@ -187,9 +189,9 @@ public class FileUpdateServerHandle extends FtcTcpActionsAdapter {
                     byte[] buf = new byte[1024];
 
                     for (SliceMapper2 slice : same_slice_list) {
-                        localSrcBlock.seek(slice.getPosition());
+                        localSrcBlock.seek(slice.getMapperPostion());
                         localSrcBlock.read(buf,0, (int) slice.getLength());
-                        randomAccessFile.seek(slice.getMapperPostion());
+                        randomAccessFile.seek(slice.getPosition());
                         randomAccessFile.write(buf,0,(int) slice.getLength());
                     }
                 } catch (IOException e) {
@@ -213,6 +215,8 @@ public class FileUpdateServerHandle extends FtcTcpActionsAdapter {
         map.remove("same");
         map.remove("length");
         map.put("protocol",Protocol.S_FILE_BACKUP_TRS_OVER);
+        session.getOperation().writeString(gson.toJson(map),map.get("charset"));
+        session.clear();//不调用将无法释放TCP连接 接收或者发送的缓冲区
     }
 
     private long capacity = 0;

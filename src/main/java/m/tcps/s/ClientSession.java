@@ -2,7 +2,6 @@ package m.tcps.s;
 
 import m.tcps.p.FtcTcpAioManager;
 import m.tcps.p.Session;
-import m.tcps.p.SessionContentStore;
 import m.tcps.p.SocketImp;
 
 /**
@@ -10,14 +9,10 @@ import m.tcps.p.SocketImp;
  * 服务端 - 与某一个客户端的 会话
  */
 public class ClientSession extends Session {
-    private SessionContentStore readBean;
+
     public ClientSession(FtcTcpAioManager manager, SocketImp connect) {
         super(manager,connect);
-        this.readBean = new SessionContentStore(SessionContentStore.TYPE_READ);
-        read(this.readBean);
+        read();
     }
-    @Override
-    public void close() {
-        readBean.close();
-    }
+
 }
