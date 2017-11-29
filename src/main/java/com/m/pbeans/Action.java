@@ -1,0 +1,8 @@
+package com.m.pbeans;
+
+/**
+ * Created by user on 2017/11/27.
+ */
+public interface Action<T> {
+    void call(T t);
+}

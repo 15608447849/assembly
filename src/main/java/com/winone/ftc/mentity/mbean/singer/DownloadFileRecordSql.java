@@ -2,7 +2,7 @@ package com.winone.ftc.mentity.mbean.singer;
 
 import com.winone.ftc.mtools.FileUtil;
 import com.winone.ftc.mtools.Log;
-import m.sqlites.SQLiteHelper;
+import com.m.sqlites.SQLiteHelper;
 
 import java.util.*;
 

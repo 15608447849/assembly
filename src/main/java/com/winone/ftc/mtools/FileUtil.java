@@ -1,6 +1,9 @@
 package com.winone.ftc.mtools;
 
 
+import com.google.gson.Gson;
+import com.google.gson.JsonSyntaxException;
+
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.nio.ByteBuffer;
@@ -368,7 +371,35 @@ public class FileUtil {
 
 
 
+    public static String readFileText(String path,String charset){
+        if (StringUtil.isEntry(charset)) charset = "UTF-8";
+        try(FileInputStream fis = new FileInputStream(path)) {
+            StringBuilder sb = new StringBuilder();
+            byte[] bytes = new byte[1024];
+            int len;
+            while ( (len = fis.read(bytes))>0 ){
+                sb.append( new String (bytes,0,len,charset));
+            }
+            return sb.toString();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+    public static <T> T readFileJson2Object(String path,String charset,Class<T> classType){
+        String json = readFileText(path,charset);
 
+        if (json!=null){
+            try {
+                return new Gson().fromJson(json,classType);
+            } catch (JsonSyntaxException e) {
+                e.printStackTrace();
+            }
+        }
+        return null;
+    }
 
 
 
