@@ -4,7 +4,10 @@ import com.m.backup.beans.TimerBean;
 import com.m.pbeans.Action;
 import com.winone.ftc.mtools.Log;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * Created by user on 2017/11/27.
@@ -27,7 +30,13 @@ public class FBCTimeTaskOp{
                 @Override
                 public void call(TimerBean timerBean) {
                     //启动 客户端遍历文件夹
-                    client.ergodicDirectory();
+                    final List<InetSocketAddress> serverAddressList = client.getServerAddressList();
+                    if (serverAddressList!=null && serverAddressList.size()>0){
+                        for (InetSocketAddress it:serverAddressList){
+                            client.ergodicDirectory(it);
+                        }
+                    }
+
                     if(timerBean.getType() == TimerBean.FIXED_POINT){
                         //定点
                         //从队列中移除

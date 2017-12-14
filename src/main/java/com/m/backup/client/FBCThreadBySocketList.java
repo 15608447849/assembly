@@ -3,6 +3,7 @@ package com.m.backup.client;
 import com.winone.ftc.mtools.Log;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.concurrent.locks.ReentrantLock;
@@ -57,7 +58,7 @@ class FBCThreadBySocketList extends FBCThread {
         }
     }
 
-    public FileUpClientSocket get() {
+    public FileUpClientSocket getSocket(InetSocketAddress serverAddress) {
         try{
             lock.lock();
             FileUpClientSocket socket;
@@ -66,15 +67,24 @@ class FBCThreadBySocketList extends FBCThread {
                 while (iterator.hasNext()){
                     socket = iterator.next();
                     //未使用
-                    if ( !socket.isUsing() && socket.isConnected()){
-                        return socket;
+                    if (!socket.isUsing() && socket.isConnected()){
+                        if (socket.validServerAddress(serverAddress)){
+                            return socket;
+                        }else{
+                            if (cId>=max){
+                                socket.close();
+                                iterator.remove();
+                                cId--;
+                            }
+                        }
+
                     }
                 }
             }
 
             if (list.size()<max){
                 try {
-                    socket = new FileUpClientSocket(cId,ftcBackupClient.getSocketServerAddress());
+                    socket = new FileUpClientSocket(cId,serverAddress);
                     list.add(socket);
                     cId++;
                     return socket;
@@ -88,5 +98,9 @@ class FBCThreadBySocketList extends FBCThread {
         }finally {
             lock.unlock();
         }
+    }
+
+    public int getSocketLimit() {
+        return max;
     }
 }

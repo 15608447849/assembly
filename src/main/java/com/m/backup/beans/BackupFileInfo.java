@@ -5,6 +5,7 @@ import com.winone.ftc.mtools.FileUtil;
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
+import java.net.InetSocketAddress;
 
 /**
  * Created by user on 2017/11/24.
@@ -13,14 +14,18 @@ public class BackupFileInfo {
     private String dirs;
     private String rel_path;
     private String fileName;
+    private InetSocketAddress serverAddress;
 
-
-    public BackupFileInfo(String dirs,String file) {
+    public BackupFileInfo(String dirs,String file,InetSocketAddress serverAddress) {
         this.dirs = FileUtil.replaceFileSeparatorAndCheck(dirs,null,FileUtil.SEPARATOR);
         file = FileUtil.SEPARATOR+FileUtil.replaceFileSeparatorAndCheck(file,FileUtil.SEPARATOR,null);
         this.rel_path = file.substring(0,file.lastIndexOf(FileUtil.SEPARATOR)+1);
         this.fileName = file.substring(file.lastIndexOf(FileUtil.SEPARATOR)+1);
+        this.serverAddress = serverAddress;
+    }
 
+    public InetSocketAddress getServerAddress() {
+        return serverAddress;
     }
 
     public String getDirs() {

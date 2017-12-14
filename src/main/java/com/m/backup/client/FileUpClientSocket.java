@@ -197,4 +197,11 @@ public class FileUpClientSocket extends FtcTcpActionsAdapter{
         }
     }
 
+    public boolean validServerAddress(InetSocketAddress socketAddress) {
+        try {
+            return socketClient.getSocket().getRemoteAddress().equals(socketAddress);
+        } catch (IOException e) {
+        }
+        return false;
+    }
 }

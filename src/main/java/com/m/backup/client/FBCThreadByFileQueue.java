@@ -27,11 +27,11 @@ public class FBCThreadByFileQueue extends FBCThread {
                 if (queue!=null){
                     BackupFileInfo fileInfo = queue.take();
 //                    Log.println("fileInfo,"+fileInfo);
-                    FileUpClientSocket fusc = ftcBackupClient.getSocketClient();
-
-//                    Log.println("fileInfo,"+fileInfo+"\nFileUpClientSocket,"+fusc);
-                    //设置任务
-                    fusc.setCur_up_file(fileInfo);
+                    FileUpClientSocket socket = ftcBackupClient.getSocketClient(fileInfo.getServerAddress());
+                    if (socket!=null){
+                        //设置任务
+                        socket.setCur_up_file(fileInfo);
+                    }
                 }
 
             } catch (InterruptedException e) {
