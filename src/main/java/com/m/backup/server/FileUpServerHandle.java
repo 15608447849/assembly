@@ -35,7 +35,7 @@ public class FileUpServerHandle extends FtcTcpActionsAdapter {
     public FileUpServerHandle(SocketImp socketImp, FtcBackupServer ftcBackupServer) {
         this.ftcBackupServer = ftcBackupServer;
         flag = socketImp.getSocket().toString()+"-"+getClass().getSimpleName()+"-"+ftcBackupServer.getSockSer().getCurrentClientSize()+" >>  ";
-        Log.println(flag,"连接服务器成功.");
+//        Log.println(flag,"连接服务器成功.");
     }
 
     @Override
@@ -46,7 +46,7 @@ public class FileUpServerHandle extends FtcTcpActionsAdapter {
 
     @Override
     public void connectClosed(Session session) {
-         Log.println(flag,"连接关闭,资源清理.");
+//         Log.println(flag,"连接关闭,资源清理.");
         closeResource();
     }
 
@@ -58,7 +58,7 @@ public class FileUpServerHandle extends FtcTcpActionsAdapter {
      */
     private void handle(Session session,Map<String, String> map) {
         String protocol = map.get("protocol");
-        Log.println(flag,protocol+" , " +map.get("filename"));
+//        Log.println(flag,protocol+" , " +map.get("filename"));
         if (protocol.equals(Protocol.C_FILE_BACKUP_QUEST)){
             ClientFileBackupQuest(session,map);
         }else if (protocol.equals(Protocol.C_FILE_BACKUP_TRS_START)){
