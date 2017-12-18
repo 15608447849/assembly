@@ -8,13 +8,18 @@ import java.io.RandomAccessFile;
 import java.net.InetSocketAddress;
 
 /**
- * Created by user on 2017/11/24.
+ * Created by lzp on 2017/11/24.
  */
 public class BackupFileInfo {
+
+
     private String dirs;
     private String rel_path;
     private String fileName;
     private InetSocketAddress serverAddress;
+
+    private int loopCount = 0;
+
 
     public BackupFileInfo(String dirs,String file,InetSocketAddress serverAddress) {
         this.dirs = FileUtil.replaceFileSeparatorAndCheck(dirs,null,FileUtil.SEPARATOR);
@@ -42,6 +47,14 @@ public class BackupFileInfo {
         return fileName;
     }
 
+    public int getLoopCount() {
+        return loopCount;
+    }
+
+    public void setLoopCount(int loopCount) {
+        this.loopCount = loopCount;
+    }
+
 
     @Override
     public String toString() {
@@ -49,6 +62,9 @@ public class BackupFileInfo {
                 "dirs='" + dirs + '\'' +
                 ", rel_path='" + rel_path + '\'' +
                 ", fileName='" + fileName + '\'' +
+                ", serverAddress=" + serverAddress +
+                ", loopCount=" + loopCount +
+                ", randomAccessFile=" + randomAccessFile +
                 '}';
     }
 

@@ -31,12 +31,12 @@ public class FileUpClientSocket extends FtcTcpActionsAdapter{
     private final Gson gson = new Gson();
     private static final String CHARSET = "UTF-8";
     private static final int BUFFER_SIZE = 1024*16;
-    public FileUpClientSocket(int ID, InetSocketAddress serverAddress) throws IOException, InterruptedException {
-        this.flag = String.format("文件同步客户端管道-%d >> ",ID);
+    private FBCThreadBySocketList fbcThreadBySocketList;
+    public FileUpClientSocket(FBCThreadBySocketList fbcThreadBySocketList, InetSocketAddress serverAddress) throws IOException, InterruptedException {
+        this.fbcThreadBySocketList = fbcThreadBySocketList;
+        this.flag = String.format("文件同步客户端管道-%d >> ",fbcThreadBySocketList.getCurrentSize());
         this.socketClient = new FtcSocketClient(serverAddress,this);
         this.socketClient.connectServer();//连接服务器
-        Thread.sleep(1000);
-
     }
     public String getFlag() {
         return flag;
@@ -75,6 +75,9 @@ public class FileUpClientSocket extends FtcTcpActionsAdapter{
         return (System.currentTimeMillis() - endUsingTime) > ideaTime;
     }
 
+    public int getRemainTime(long ideaTime){
+        return (int)((ideaTime - (System.currentTimeMillis() - endUsingTime) ));
+    }
 
     //文件上传
     private void uploadFile() {
@@ -140,7 +143,7 @@ public class FileUpClientSocket extends FtcTcpActionsAdapter{
       set 4 通知关闭连接
      */
     private void backup(Map<String, String> map,SliceScrollResult result) {
-        Log.println(flag,cur_up_file);
+//        Log.println(flag,cur_up_file);
         if (result!=null){
             String diff_block_str = result.getDifferentBlockSequence();
             map.put("different",diff_block_str);
@@ -195,6 +198,8 @@ public class FileUpClientSocket extends FtcTcpActionsAdapter{
             cur_up_file.clear();
             cur_up_file=null;
         }
+        //通知 连接池管理队列
+        fbcThreadBySocketList.notifyComplete();
     }
 
     public boolean validServerAddress(InetSocketAddress socketAddress) {

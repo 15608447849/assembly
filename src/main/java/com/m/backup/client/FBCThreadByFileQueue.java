@@ -1,8 +1,6 @@
 package com.m.backup.client;
 
 import com.m.backup.beans.BackupFileInfo;
-import com.winone.ftc.mtools.Log;
-
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
@@ -26,15 +24,19 @@ public class FBCThreadByFileQueue extends FBCThread {
             try {
                 if (queue!=null){
                     BackupFileInfo fileInfo = queue.take();
-//                    Log.println("fileInfo,"+fileInfo);
-                    FileUpClientSocket socket = ftcBackupClient.getSocketClient(fileInfo.getServerAddress());
-                    if (socket!=null){
-                        //设置任务
-                        socket.setCur_up_file(fileInfo);
+                    ftcBackupClient.bindSocketClient(fileInfo);
+                    if (fileInfo.getLoopCount()>0){
+                        if (fileInfo.getLoopCount()>=3){
+                            //丢弃任务
+                            throw new IllegalArgumentException("file '"+fileInfo.getFullPath()+"' backup to '"+ fileInfo.getServerAddress()+"' fail.");
+                        }else{
+                            putFileInfo(fileInfo);
+                        }
                     }
+
                 }
 
-            } catch (InterruptedException e) {
+            }catch (Exception e){
                 e.printStackTrace();
             }
         }

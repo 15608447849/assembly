@@ -69,8 +69,6 @@ public class FileUpServerHandle extends FtcTcpActionsAdapter {
     }
 
 
-
-
     /**
      * 客户端文件同步请求
      * @param map

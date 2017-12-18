@@ -4,10 +4,13 @@ import com.google.gson.Gson;
 import com.winone.ftc.mtools.FileUtil;
 import com.m.backup.imps.FtcBackAbs;
 import com.m.backup.beans.BackupFileInfo;
+import com.winone.ftc.mtools.Log;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,16 +40,34 @@ public class FtcBackupClient extends FtcBackAbs {
         this.watchServer = new FBCWatchServer(this);
     }
 
-    protected FileUpClientSocket getSocketClient(InetSocketAddress InetSocketAddress) throws InterruptedException{
+    protected void bindSocketClient(BackupFileInfo backupFileInfo) throws InterruptedException{
         FileUpClientSocket socketClient;
-        int loopIndex=0;
         while (true){
-//            Thread.sleep(1000); //休眠1秒 ,直到拿到为止
-            socketClient = socketList.getSocket(InetSocketAddress);
-            if (socketClient!=null || loopIndex>socketList.getSocketLimit()) break;
-            loopIndex++;
+
+            try {
+                socketClient = socketList.getSocket(backupFileInfo.getServerAddress());
+                if (socketClient!=null) {
+//                    Log.println("执行 "+backupFileInfo);
+                    socketClient.setCur_up_file(backupFileInfo);
+                    break;
+                }
+            } catch (Exception e) {
+               if (e instanceof IOException){
+                   //连接不上服务器 ,放入队列 (最多尝试三次)
+                   backupFileInfo.setLoopCount(backupFileInfo.getLoopCount()+1);
+                   break;
+               }else if (e instanceof IllegalStateException){
+                   //当前最大连接数,无法获取连接,检测并把当前任务放入队列
+                   int time = socketList.check();
+//                   Log.println("最大连接,请等待至多 "+time+ " 秒");
+                   synchronized (FtcBackupClient.this){
+                       FtcBackupClient.this.wait(time);
+                   }
+               }else{
+                   e.printStackTrace();
+               }
+            }
         }
-        return socketClient;
     }
 
 
