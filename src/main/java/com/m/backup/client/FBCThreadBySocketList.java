@@ -28,6 +28,7 @@ class FBCThreadBySocketList extends FBCThread {
     public void run() {
         //检测队列中的socket连接, 使用时间>30秒, 移除连接
         while (isRunning){
+
             waitComplete();
         }
     }
@@ -39,6 +40,9 @@ class FBCThreadBySocketList extends FBCThread {
     public int check() {
         int time = LOOP_TIME;
         boolean notify = false;
+        if (lock==null){
+            return -1;
+        }
         try{
             lock.lock();
 
