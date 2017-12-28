@@ -32,22 +32,22 @@ public class ManagerImp implements Manager {
     // 存储当前运行中的任务 用于查询状态
     private final StateInfoStorage stateList;
     //运行中的任务
-    private final DownloadTaskQueue runQueue;
+    private final TaskQueue runQueue;
     //等待执行的任务
-    private final DownloadWaitTaskQueue waitQueue;
+    private final TaskWaitQueue waitQueue;
     //下载上传状态更新
     private final StateNotification stateNotification;
 
     private ManagerImp(){
         threadManage = MThreadManage.get();
         stateList = StateInfoStorage.get();
-        runQueue = DownloadTaskQueue.get();
-        waitQueue = DownloadWaitTaskQueue.get();
+        runQueue = TaskQueue.get();
+        waitQueue = TaskWaitQueue.get();
         stateNotification = StateNotification.getInstant();
         runQueue.setLimit(threadManage.getCountMax());
     }
 
-    public DownloadTaskQueue getCurrentTaskQueue() {
+    public TaskQueue getCurrentTaskQueue() {
         return runQueue;
     }
 

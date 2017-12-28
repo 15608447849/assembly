@@ -1,6 +1,5 @@
 package com.winone.ftc.mentity.mbean.singer;
 
-import com.sun.org.apache.regexp.internal.RE;
 import com.winone.ftc.mentity.itface.MRun;
 import com.winone.ftc.mentity.itface.MThread;
 import com.winone.ftc.mentity.mbean.entity.Task;
@@ -128,14 +127,14 @@ public class MThreadManage extends Thread{
     private void recovery(Task task,MRun run) {
         //将任务丢回待下载队列 -> 1.任务状态设置为NEW ,并且从 正在下载的队列中, 移除这个run
         task.setState(Task.State.FINISH);
-        MRun getRun  = DownloadTaskQueue.get().removeRunning(task);
+        MRun getRun  = TaskQueue.get().removeRunning(task);
         if (getRun !=null && getRun.equals(run)){
             //从记录文件夹中移除
             StateInfoStorage.get().removeStateFile(task);
         }
 //        Log.w("回收:" + task);
         task.setState(Task.State.NEW);
-        DownloadWaitTaskQueue.get().addTask(task,run);
+        TaskWaitQueue.get().addTask(task,run);
     }
 
 

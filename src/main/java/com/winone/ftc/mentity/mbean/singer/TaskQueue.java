@@ -6,7 +6,6 @@ import com.winone.ftc.mtools.Log;
 
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -15,15 +14,15 @@ import java.util.concurrent.locks.ReentrantLock;
  * 当前下载中
  * 任务 - 线程
  */
-public class DownloadTaskQueue{
+public class TaskQueue {
 
-    private DownloadTaskQueue() {
+    private TaskQueue() {
     }
 
     private static class Holder{
-        private static DownloadTaskQueue instance = new DownloadTaskQueue();
+        private static TaskQueue instance = new TaskQueue();
     }
-    public static DownloadTaskQueue get(){
+    public static TaskQueue get(){
         return Holder.instance;
     }
 

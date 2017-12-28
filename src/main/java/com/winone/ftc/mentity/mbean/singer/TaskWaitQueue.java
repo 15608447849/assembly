@@ -11,12 +11,12 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * Created by user on 2017/6/24.
  */
-public class DownloadWaitTaskQueue extends Thread{
+public class TaskWaitQueue extends Thread{
     private final ReentrantLock lock = new ReentrantLock();
     private final LinkedHashMap<Task,MRun> maps = new LinkedHashMap();
     private final Random random = new Random();
 
-    private DownloadWaitTaskQueue() {
+    private TaskWaitQueue() {
       setDaemon(true);
       setName("FTC@TaskWaitQueue");
       start();
@@ -25,9 +25,9 @@ public class DownloadWaitTaskQueue extends Thread{
         return maps.size();
     }
     private static class Holder{
-        private static final DownloadWaitTaskQueue instance = new DownloadWaitTaskQueue();
+        private static final TaskWaitQueue instance = new TaskWaitQueue();
     }
-    public static DownloadWaitTaskQueue get(){
+    public static TaskWaitQueue get(){
         return Holder.instance ;
     }
     /**
@@ -74,7 +74,7 @@ public class DownloadWaitTaskQueue extends Thread{
             lock.lock();
 //            Log.w(getName()+ "等待检测.当前数量: "+ maps.size());
             if (maps.size() >0 ){
-                size = DownloadTaskQueue.get().checkLimit();
+                size = TaskQueue.get().checkLimit();
                 if (size>0){
                     tasks = new Task[size];
                     runnables = new MRun[size];
