@@ -1,4 +1,4 @@
-package com.m.pbeans;
+package com.m.backup.beans;
 
 /**
  * Created by user on 2017/11/27.

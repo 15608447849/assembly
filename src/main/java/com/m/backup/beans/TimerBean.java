@@ -1,9 +1,7 @@
 package com.m.backup.beans;
 
 
-import com.winone.ftc.mtools.Log;
 import com.winone.ftc.mtools.TimeUtil;
-import com.m.pbeans.Action;
 
 import java.util.Date;
 import java.util.Timer;
