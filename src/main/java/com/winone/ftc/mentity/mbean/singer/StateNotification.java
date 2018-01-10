@@ -76,6 +76,9 @@ public class StateNotification extends Thread {
         try {
             lock.lock();
             if (list.size()>0){
+                StringBuilder stringBuilder = new StringBuilder();
+
+                stringBuilder.append("\t#\t检测进度\t#").append("\n");
                 Iterator<com.winone.ftc.mentity.mbean.entity.State> itr = list.iterator();
                 com.winone.ftc.mentity.mbean.entity.State state;
                 int index = 0;
@@ -91,11 +94,11 @@ public class StateNotification extends Thread {
                             state.setPreCurSizeByTime(checkTime);
                             TaskUtils.sendStateToTask(state);
                         }
-                        Log.e(index+ "> "+state.toString());
+                        stringBuilder.append("Num:"+index+ ">> "+state.toString()).append("\n");
                     }
-
                 }
-                Log.e("- - - - - -");
+
+                Log.e(stringBuilder.toString());
             }
         }finally {
             lock.unlock();

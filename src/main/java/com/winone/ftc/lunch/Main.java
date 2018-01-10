@@ -20,7 +20,7 @@ public class Main{
 //        upload();
 //        uploadFTP();
 //        TEST_();
-        httpDown();
+//        httpDown();
 
 //        down("http://172.16.0.201:8080/lee/1.zip");
 //        down(args[0]);

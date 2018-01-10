@@ -10,10 +10,28 @@ tasks.withType(JavaCompile) {
 repositories {
     mavenCentral()
 }
+def addLibs(String libsPath,def fun){
 
+    File libs = file(libsPath)
+    libs.listFiles().each {
+        file->
+            if (file.isDirectory()){
+                addLibs(file.path,fun)
+            }else{
+                fun(file)
+            }
+
+    }
+}
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
-    compile fileTree(include: ['*.jar'], dir: 'libs')
+    addLibs('libs',
+            {
+                file ->
+                    println(file)
+                    compile files(file.path)
+            }
+    )
 }
 jar {
     manifest {
