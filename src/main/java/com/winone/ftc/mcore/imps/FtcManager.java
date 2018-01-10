@@ -16,7 +16,7 @@ import java.util.List;
  * Created by lzp on 2017/5/8.
  * 实现 下载管理器
  */
-public class ManagerImp implements Manager {
+public class FtcManager implements Manager {
     private static final String TAG = "下载管理器";
     private static final String HOST = "www.baidu.com";
 
@@ -38,7 +38,7 @@ public class ManagerImp implements Manager {
     //下载上传状态更新
     private final StateNotification stateNotification;
 
-    private ManagerImp(){
+    private FtcManager(){
         threadManage = MThreadManage.get();
         stateList = StateInfoStorage.get();
         runQueue = TaskQueue.get();
@@ -52,9 +52,9 @@ public class ManagerImp implements Manager {
     }
 
     private static class InstantHolder{
-        private static ManagerImp instant  = new ManagerImp();
+        private static FtcManager instant  = new FtcManager();
     }
-    public static ManagerImp get(){
+    public static FtcManager get(){
         return InstantHolder.instant;
     }
 

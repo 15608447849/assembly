@@ -1,6 +1,6 @@
 package com.winone.ftc.mentity.mbean.entity;
 
-import com.winone.ftc.mcore.imps.ManagerImp;
+import com.winone.ftc.mcore.imps.FtcManager;
 import com.winone.ftc.mtools.FileUtil;
 import com.winone.ftc.mtools.Log;
 import com.winone.ftc.mtools.TaskUtils;
@@ -104,7 +104,7 @@ public class TaskRecord implements Task.onResult {
             } catch (InterruptedException e) {
             }
             task.setState(Task.State.NEW);
-            ManagerImp.get().execute(task);
+            FtcManager.get().execute(task);
         }
 
     }

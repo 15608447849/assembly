@@ -1,15 +1,13 @@
 package com.winone.ftc.mentity.mbean.singer;
 
-import com.winone.ftc.mcore.imps.ManagerImp;
+import com.winone.ftc.mcore.imps.FtcManager;
 import com.winone.ftc.mentity.mbean.entity.Task;
 import com.winone.ftc.mentity.mbean.entity.TaskFactory;
 import com.winone.ftc.mtools.FileUtil;
-import com.winone.ftc.mtools.Log;
 import com.winone.ftc.mtools.StringUtil;
 import com.winone.ftc.mtools.TaskUtils;
 
 import java.io.File;
-import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
@@ -163,7 +161,7 @@ public class StateInfoStorage extends Thread{
                         }
                         if (files[i].delete()){
                             //执行任务
-                            ManagerImp.get().execute(task);
+                            FtcManager.get().execute(task);
                         }
                     }
 

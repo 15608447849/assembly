@@ -1,6 +1,6 @@
 package com.winone.ftc.mentity.mbean.entity;
 
-import com.winone.ftc.mcore.imps.ManagerImp;
+import com.winone.ftc.mcore.imps.FtcManager;
 import com.winone.ftc.mtools.Log;
 import com.winone.ftc.mtools.StringUtil;
 
@@ -192,7 +192,7 @@ public class TaskFactory {
                 }
             }));
         }
-        if (ManagerImp.get().listExecuteBlock(taskList)) return resultList;
+        if (FtcManager.get().listExecuteBlock(taskList)) return resultList;
         return null;
     }
 

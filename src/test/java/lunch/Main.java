@@ -1,6 +1,6 @@
-package com.winone.ftc.lunch;
+package lunch;
 
-import com.winone.ftc.mcore.imps.ManagerImp;
+import com.winone.ftc.mcore.imps.FtcManager;
 
 import com.winone.ftc.mentity.mbean.entity.ManagerParams;
 import com.winone.ftc.mentity.mbean.entity.State;
@@ -28,7 +28,7 @@ public class Main{
 
     private static void down(String url) {
 
-        ManagerImp.get().execute(TaskFactory.httpTaskDown(url,
+        FtcManager.get().execute(TaskFactory.httpTaskDown(url,
                 "GET",
                 "./temp",
                 url.substring(url.lastIndexOf("/")+1),
@@ -36,9 +36,9 @@ public class Main{
     }
 
     private static void httpDown() {
-        ManagerImp.get().initial(new ManagerParams(4,false,true,false));
+        FtcManager.get().initial(new ManagerParams(4,false,true,false));
 
-        ManagerImp.get().execute(TaskFactory.httpTaskDown("http://bfo.clientdown.sdo.com/GA_2.26.2.0_20170818/GA_client_2.26.2.0_20170818.exe",
+        FtcManager.get().execute(TaskFactory.httpTaskDown("http://bfo.clientdown.sdo.com/GA_2.26.2.0_20170818/GA_client_2.26.2.0_20170818.exe",
                 "GET",
                 "C:\\FileServerDirs\\TEST",
                 "rxyh.exe",
@@ -97,7 +97,7 @@ public class Main{
 
 
 
-        ManagerImp.get().execute(task);
+        FtcManager.get().execute(task);
 
 
 
@@ -131,7 +131,7 @@ public class Main{
 
 
     private static void uploadFTP() {
-        ManagerImp.get().execute(
+        FtcManager.get().execute(
                 TaskFactory.ftpTaskUpdate(
                         "ftp://admin:admin@172.16.0.100:21/LIZHAOPING/1.png",
                         "C:\\FileServerDirs\\source",
@@ -151,7 +151,7 @@ public class Main{
     }
 
     private static void upload() {
-                ManagerImp.get().execute(
+                FtcManager.get().execute(
                 TaskFactory.httpTaskUpdate(
                         "http://172.16.0.200:8080/ftc/upload",
                         "POST",
@@ -189,7 +189,7 @@ public class Main{
 //                        "1491817777108.jpg",
 //                        map,
 //                        false));
-                        ManagerImp.get().execute(
+                        FtcManager.get().execute(
                 TaskFactory.httpTaskDown(
                         "http://image8.mall.icbc.com.cn/image/10022723/1498528158092_4.png",
                         "GET",
@@ -212,7 +212,7 @@ public class Main{
 //                        map,
 //                        false));
 
-                ManagerImp.get().execute(TaskFactory.httpTaskDown(
+                FtcManager.get().execute(TaskFactory.httpTaskDown(
                         "http://image8.mall.icbc.com.cn/image/10022723/1498528158092_4.png",
                         "GET",
                         "C:\\FileServerDirs",
@@ -224,7 +224,7 @@ public class Main{
                         Log.i("成功1 :  "+ state);
                     }
                 }));
-        ManagerImp.get().execute(TaskFactory.httpTaskDown(
+        FtcManager.get().execute(TaskFactory.httpTaskDown(
                 "http://image8.mall.icbc.com.cn/image/10022723/1498528158092_4.png",
                 "GET",
                 "C:\\FileServerDirs",
@@ -236,7 +236,7 @@ public class Main{
                 Log.i("成功2 :  "+ state);
             }
         }));
-        ManagerImp.get().execute(TaskFactory.httpTaskDown(
+        FtcManager.get().execute(TaskFactory.httpTaskDown(
                 "http://image8.mall.icbc.com.cn/image/10022723/1498528158092_4.png",
                 "GET",
                 "C:\\FileServerDirs",
@@ -248,7 +248,7 @@ public class Main{
                 Log.i("成功3 :  "+ state);
             }
         }));
-        ManagerImp.get().execute(TaskFactory.httpTaskDown(
+        FtcManager.get().execute(TaskFactory.httpTaskDown(
                 "http://image8.mall.icbc.com.cn/image/10022723/1498528158092_4.png",
                 "GET",
                 "C:\\FileServerDirs",

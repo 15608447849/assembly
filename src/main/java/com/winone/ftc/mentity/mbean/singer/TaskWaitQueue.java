@@ -1,6 +1,6 @@
 package com.winone.ftc.mentity.mbean.singer;
 
-import com.winone.ftc.mcore.imps.ManagerImp;
+import com.winone.ftc.mcore.imps.FtcManager;
 import com.winone.ftc.mentity.itface.MRun;
 import com.winone.ftc.mentity.mbean.entity.Task;
 import com.winone.ftc.mtools.Log;
@@ -99,7 +99,7 @@ public class TaskWaitQueue extends Thread{
             lock.unlock();
         }
         for (int i = 0; i<size;i++){
-            ManagerImp.get().executeTask(tasks[i],runnables[i]);
+            FtcManager.get().executeTask(tasks[i],runnables[i]);
         }
     }
     @Override
