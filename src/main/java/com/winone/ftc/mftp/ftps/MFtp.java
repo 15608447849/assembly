@@ -6,6 +6,7 @@ import com.winone.ftc.mtools.Log;
 import it.sauronsoftware.ftp4j.*;
 
 import java.io.*;
+import java.util.Arrays;
 
 /**
  * Created by lzp on 2017/5/11.
@@ -144,51 +145,63 @@ public class MFtp extends it.sauronsoftware.ftp4j.FTPClient implements FtpClient
 
     @Override
     public void uploadFile(String remoteDir,String remoteFileName,File localFile,FTPDataTransferListener listener) {
-        if (remoteDir!=null){
+
 
             try {
-                //创建目录
-                createDirectory(remoteDir);
-            } catch (IOException | FTPIllegalReplyException  | FTPException  e) {
-                listener.error(e);
-            }
-            try {
-                //改变当前目录
-                changeDirectory(remoteDir);
-            } catch (IOException | FTPIllegalReplyException  | FTPException  e) {
-                listener.error(e);
-            }
-
-            try {
-                //改变当前目录
-                changeDirectory(remoteDir);
-
-                if (!localFile.exists()) {
-                    listener.error(new IllegalArgumentException("file '" + localFile.getAbsolutePath()+"' no exist."));
-                    listener.aborted();
-                }
-                InputStream inputStream = null;
-                try {
-                    inputStream = new FileInputStream(localFile);
-                    if (remoteFileName==null || remoteFileName.equals("")) remoteFileName = localFile.getName();
-                    upload(remoteFileName,inputStream,0,0,listener);
-                } catch (IOException e) {
-                    listener.error(e);
-                    listener.aborted();
-                }finally {
-                    if (inputStream!=null){
+                if (remoteDir==null) remoteDir="/";//改变当前目录到根目录
+                changeDirectory("/");
+                if (!currentDirectory().equals(remoteDir)) {//判断远程路径
+                    //层级创建目录
+                    final String[] dirNameArr = remoteDir.split("/");
+                    int i = 1;
+                    while (true) {
+                        //尝试进入,无法进入,尝试创建再次进入
                         try {
-                            inputStream.close();
-                        } catch (IOException e) {
+                            changeDirectory(dirNameArr[i]);
+                            i++;
+                            if (i == dirNameArr.length) break;
+                        } catch (IllegalStateException | IOException | FTPIllegalReplyException | FTPException e) {
+
+                            if (e instanceof FTPException
+                                    && ((FTPException) e).getCode() == 550
+                                    && ((FTPException) e).getMessage().equals("No such directory.")) {
+                                //创建目录
+                                createDirectory(dirNameArr[i]);
+                            } else {
+                                throw e;
+                            }
                         }
                     }
                 }
-
-            } catch (IOException | FTPIllegalReplyException | FTPDataTransferException | FTPException | FTPAbortedException e) {
-                listener.error(e);
-                listener.failed();
+            if (!localFile.exists()) {
+                listener.error(new IllegalArgumentException("file '" + localFile.getAbsolutePath()+"' no exist."));
+                listener.aborted();
+                return;
             }
+            InputStream inputStream = null;
+            try {
+                inputStream = new FileInputStream(localFile);
+                if (remoteFileName==null || remoteFileName.equals("")) remoteFileName = localFile.getName();
+                upload(remoteFileName,inputStream,0,0,listener);
+            } catch (IOException e) {
+                listener.error(e);
+                listener.aborted();
+            }finally {
+                if (inputStream!=null){
+                    try {
+                        inputStream.close();
+                    } catch (IOException e) {
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            listener.error(e);
+            listener.failed();
         }
+
+
+
     }
 
     @Override

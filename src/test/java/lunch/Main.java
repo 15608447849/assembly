@@ -18,7 +18,7 @@ public class Main{
 //        cli();
 //        execute();
 //        upload();
-//        uploadFTP();
+        uploadFTP();
 //        TEST_();
 //        httpDown();
 
@@ -133,9 +133,9 @@ public class Main{
     private static void uploadFTP() {
         FtcManager.get().execute(
                 TaskFactory.ftpTaskUpdate(
-                        "ftp://admin:admin@172.16.0.100:21/LIZHAOPING/1.png",
+                        "ftp://admin:admin@192.168.0.240:9999/a/b/c/d/1.txt",
                         "C:\\FileServerDirs\\source",
-                        "bg_1.jpg"
+                        "aaa"
                        ).setOnResult(new Task.onResultAdapter() {
                     @Override
                     public void onSuccess(State state) {
