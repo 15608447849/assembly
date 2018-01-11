@@ -100,7 +100,6 @@ public class FtpUpdateImp extends Excute {
 
             @Override
             public void error(Exception e) {
-                e.printStackTrace();
                 state.setError(State.ErrorCode.ERROR_BY_TRANSLATE,e.toString());
             }
         });
