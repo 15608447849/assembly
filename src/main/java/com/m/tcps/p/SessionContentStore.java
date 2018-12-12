@@ -24,7 +24,7 @@ class SessionContentStore {
     public void setContent_type(int content_type) {
         this.protocol = content_type;
     }
-    private static final int BUFFER_BLOCK_SIZE = 1024*16; // 16K得jvm堆外内存
+    private static final int BUFFER_BLOCK_SIZE = 16 * 1024 * 1024; // 4M jvm堆外内存
     /**
      * 系统接收到的缓冲区 包数据
      */
@@ -41,7 +41,7 @@ class SessionContentStore {
             buffer.get(bytes);
             buffer.clear();
             receiveBufferQueue.put(bytes);
-            //Log.println("队列大小: " + receiveBufferQueue.size()+" 添加数据: "+ bytes.length);
+//            Log.i("队列大小: " + receiveBufferQueue.size()+" 添加数据: "+ bytes.length);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -50,7 +50,7 @@ class SessionContentStore {
 
     public byte[] takeBuffer() {
         try {
-//            Log.println("队列大小: " + receiveBufferQueue.size()+" 尝试取出中");
+//            Log.i("队列大小: " + receiveBufferQueue.size()+" 尝试取出中");
             return receiveBufferQueue.take();
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -98,7 +98,7 @@ class SessionContentStore {
     }
     public void clean(final ByteBuffer byteBuffer) {
         if (byteBuffer.isDirect()) {
-//            Log.println(byteBuffer);
+//            Log.i(byteBuffer);
             ((DirectBuffer)byteBuffer).cleaner().clean();
         }
     }
@@ -107,7 +107,7 @@ class SessionContentStore {
 //        return ByteBuffer.allocate(size);
     }
     public void clear() {
-//        Log.println("清理缓冲区");
+//        Log.i("清理缓冲区");
         if (ramContentBuffer!=null){
             ramContentBuffer.clear();
             clean(ramContentBuffer);
@@ -126,7 +126,6 @@ class SessionContentStore {
         }
         receiveBufferQueue.clear();
         System.gc();
-
     }
     private ByteBuffer sendBufferBySystemTcpStack;
     private ByteBuffer readBufferBySystemTcpStack;
@@ -134,8 +133,8 @@ class SessionContentStore {
         if (sendBufferBySystemTcpStack==null){
 
             sendBufferBySystemTcpStack = createByteBuffer(BUFFER_BLOCK_SIZE+8);//八位协议位
-//            Log.println("sendBufferBySystemTcpStack :"+sendBufferBySystemTcpStack);
-//            Log.println("创建发送消息缓冲区");
+//            Log.i("sendBufferBySystemTcpStack :"+sendBufferBySystemTcpStack);
+//            Log.i("创建发送消息缓冲区");
         }
         sendBufferBySystemTcpStack.clear();
         return sendBufferBySystemTcpStack;
@@ -144,8 +143,8 @@ class SessionContentStore {
     public ByteBuffer getReadBufferBySystemTcpStack() {
         if (readBufferBySystemTcpStack==null){
             readBufferBySystemTcpStack = createByteBuffer(BUFFER_BLOCK_SIZE+8);
-//            Log.println("readBufferBySystemTcpStack :"+readBufferBySystemTcpStack);
-//            Log.println("创建读取消息缓冲区");
+//            Log.i("readBufferBySystemTcpStack :"+readBufferBySystemTcpStack);
+//            Log.i("创建读取消息缓冲区");
         }
         return readBufferBySystemTcpStack;
     }

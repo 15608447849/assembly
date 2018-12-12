@@ -1,4 +1,5 @@
 import com.m.backup.server.FtcBackupServer;
+import com.winone.ftc.mtools.Log;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -8,7 +9,10 @@ import java.net.InetSocketAddress;
  */
 public class TCP_server {
     public static void main(String[] args) throws IOException {
-        FtcBackupServer ftcBackupServer = new FtcBackupServer("C:\\FileServerDirs\\tests\\DIR_DES",new InetSocketAddress("127.0.0.1",5200));
-        while (true);
+        FtcBackupServer ftcBackupServer = new FtcBackupServer(
+                "C:\\ftcServer",
+                new InetSocketAddress("192.168.1.45",7777));
+//        while (true);
+        Log.println("- - - - - - - - - - -");
     }
 }

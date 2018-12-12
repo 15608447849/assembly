@@ -30,37 +30,79 @@ public class FileUpClientSocket extends FtcTcpActionsAdapter{
     private long endUsingTime = System.currentTimeMillis();
     private final Gson gson = new Gson();
     private static final String CHARSET = "UTF-8";
-    private static final int BUFFER_SIZE = 1024*16;
+    private static final int BUFFER_SIZE = 1024 * 1024 * 8;
     private FBCThreadBySocketList fbcThreadBySocketList;
+
     public FileUpClientSocket(FBCThreadBySocketList fbcThreadBySocketList, InetSocketAddress serverAddress) throws IOException, InterruptedException {
         this.fbcThreadBySocketList = fbcThreadBySocketList;
-        this.flag = String.format("文件同步客户端管道-%d >> ",fbcThreadBySocketList.getCurrentSize());
+        this.flag = String.format(" 文件同步客户端管道-%d  ",fbcThreadBySocketList.getCurrentSize());
         this.socketClient = new FtcSocketClient(serverAddress,this);
         this.socketClient.connectServer();//连接服务器
+        lock();
+//        Log.i(flag,Thread.currentThread()+"客户端文件传输管道,创建成功");
     }
+
+    private void lock() {
+        synchronized (this){
+            try{
+                wait(30 *1000);
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+    }
+
+
+    private void unLock(){
+        synchronized (this){
+            try{
+                notify();
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+    }
+
     public String getFlag() {
         return flag;
     }
 
     private BackupFileInfo cur_up_file; //当前待上传文件信息
-    private boolean isUsing = false; //是否在使用中
+
+    private volatile boolean isUsing = false; //是否在使用中
+
     public void setCur_up_file(BackupFileInfo cur_up_file) {
         this.cur_up_file = cur_up_file;
         isUsing = true;//设置使用中
         uploadFile();
     }
+
     public boolean isUsing() {
         return isUsing;
     }
 
+
+    @Override
+    public void connectSucceed(Session session) {
+        super.connectSucceed(session);
+
+
+    }
+
     @Override
     public void receiveString(Session session, String message) {
+        if (message.equals("start")){
+//            Log.i(flag,"已连接 - " +session);
+            unLock();
+            return;
+        }
         Map<String,String> map = gson.fromJson(message,Map.class);
         handle(map);
     }
+
     @Override
     public void connectClosed(Session session) {
-        clear();
+        transOver();
     }
 
     public boolean isConnected() {
@@ -75,11 +117,10 @@ public class FileUpClientSocket extends FtcTcpActionsAdapter{
         return (System.currentTimeMillis() - endUsingTime) > ideaTime;
     }
 
-    public int getRemainTime(long ideaTime){
-        return (int)((ideaTime - (System.currentTimeMillis() - endUsingTime) ));
-    }
 
-    //文件上传
+
+
+    //文件上传开始点
     private void uploadFile() {
             //1. 通知服务器, 发送文件 相对路径,文件名
             Map<String,String> map = new HashMap<>();
@@ -121,7 +162,7 @@ public class FileUpClientSocket extends FtcTcpActionsAdapter{
                 backup(map,result);
             }else{
                 if (result.getSameSize() == list.size()){ //不用传输
-                    clear();
+                    transOver();
                 }else{
                     //全量传输
                     map.put("translate","all");
@@ -143,7 +184,7 @@ public class FileUpClientSocket extends FtcTcpActionsAdapter{
       set 4 通知关闭连接
      */
     private void backup(Map<String, String> map,SliceScrollResult result) {
-//        Log.println(flag,cur_up_file);
+
         if (result!=null){
             String diff_block_str = result.getDifferentBlockSequence();
             map.put("different",diff_block_str);
@@ -154,52 +195,56 @@ public class FileUpClientSocket extends FtcTcpActionsAdapter{
         map.put("protocol",C_FILE_BACKUP_TRS_START);
         SessionOperation op =  socketClient.getSession().getOperation();
         try{
+            endUsingTime = System.currentTimeMillis();
             op.writeString(gson.toJson(map),CHARSET); //开始传输
             RandomAccessFile randomAccessFile = cur_up_file.getRandomAccessFile();
-            byte[]  buffer = new byte[BUFFER_SIZE];
+            byte[] bytes = new byte[BUFFER_SIZE];
             int len;
             if (result==null){
                 //全部传输
                 randomAccessFile.seek(0);
-                while( ( len = randomAccessFile.read(buffer) )> 0){
-                    op.writeBytes(buffer,0,len);
+//                long pos = 0;
+                while( isUsing && ( len = randomAccessFile.read(bytes) )> 0){
+//                    pos += len;
+//                    Log.i(Thread.currentThread(),flag," "+cur_up_file," 单次量 : "+ len," 进度: "+ String.format("%.2f",((double)pos/ cur_up_file.getFileLength())));
+                    op.writeBytes(bytes,0,len);
                 }
             }else{
                 //差异传输
                 long count;
                 for (SliceMapper slice : result.getList_diff()){
+                    if (!isUsing) return;
                     randomAccessFile.seek(slice.getPosition());
                     count = slice.getLength();
                     while (count>0){
-                        len = (int) Math.min(buffer.length,count);
-                        randomAccessFile.read(buffer,0,len);
-                        op.writeBytes(buffer,0, len);
+                        len = (int) Math.min(bytes.length,count);
+                        randomAccessFile.read(bytes,0,len);
+                        op.writeBytes(bytes,0, len);
                         count = count - len;
                     }
                 }
             }
-            map.put("protocol",C_FILE_BACKUP_TRS_END);
+
+            if (isUsing) Log.i(Thread.currentThread(),flag,"结束 ",cur_up_file +
+                  " 速度 = " + (((double)cur_up_file.getFileLength() / 1024) /((double)(System.currentTimeMillis() - endUsingTime) / 1000) +" kb/s" ));
             //传输完成
+            map.put("protocol",C_FILE_BACKUP_TRS_END);
             op.writeString(gson.toJson(map),CHARSET); //结束传输
-            cur_up_file.clear();
-        }catch (IOException e){
+        }catch (Exception e){
             e.printStackTrace();
         }
     }
+
     //传输完成
     private void transOver() {
-        clear();
-    }
-    private void clear() {
+        if (!isUsing) return;
         //设置 未使用状态, 设置最后使用时间,移除资源
         endUsingTime = System.currentTimeMillis();
+        if (cur_up_file!=null) cur_up_file.clear();
+        cur_up_file=null;
         isUsing = false;
-        if (cur_up_file!=null){
-            cur_up_file.clear();
-            cur_up_file=null;
-        }
-        //通知 连接池管理队列
-        fbcThreadBySocketList.notifyComplete();
+        //通知连接池管理队列
+        fbcThreadBySocketList.notifyCheckSocketIdle();
     }
 
     public boolean validServerAddress(InetSocketAddress socketAddress) {

@@ -41,11 +41,11 @@ public abstract class FtcTcpActionsAdapter implements FtcTcpActions{
         if (session!=null){
             session.close();
         }
-        if (throwable!=null){
+//        if (throwable!=null){
 //            throwable.printStackTrace();
-        }
-        if (e!=null){
+//        }
+//        if (e!=null){
 //            e.printStackTrace();
-        }
+//        }
     }
 }

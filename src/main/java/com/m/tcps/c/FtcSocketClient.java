@@ -8,6 +8,7 @@ import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.net.StandardSocketOptions;
 import java.nio.channels.AsynchronousChannelGroup;
+import java.nio.channels.AsynchronousCloseException;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 import java.util.List;
@@ -97,8 +98,11 @@ public class FtcSocketClient implements SocketImp, CompletionHandler<Void, Void>
         session.clear();//清理会话
         if (socket==null) return;
         try {
+            socket.shutdownOutput();
+            socket.shutdownInput();
             socket.close();
         } catch (Exception e) {
+            if (e instanceof AsynchronousCloseException) return;
             communicationAction.error(session,null,e);
         }finally {
             socket = null;

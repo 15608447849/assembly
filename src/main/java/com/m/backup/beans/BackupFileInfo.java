@@ -58,23 +58,21 @@ public class BackupFileInfo {
 
     @Override
     public String toString() {
-        return "BackupFileInfo{" +
-                "dirs='" + dirs + '\'' +
-                ", rel_path='" + rel_path + '\'' +
-                ", fileName='" + fileName + '\'' +
-                ", serverAddress=" + serverAddress +
-                ", loopCount=" + loopCount +
-                ", randomAccessFile=" + randomAccessFile +
-                '}';
+        return "[" +
+                dirs + rel_path +fileName +
+                " -> " +serverAddress +
+                "]";
     }
 
-    public void clear() {
+    public synchronized void clear() {
         //关闭本地文件流等 清理任务
         if (randomAccessFile!=null){
             try {
                 randomAccessFile.close();
-                randomAccessFile=null;
             } catch (IOException e) {
+                e.printStackTrace();
+            }finally {
+                randomAccessFile=null;
             }
         }
     }
@@ -88,7 +86,7 @@ public class BackupFileInfo {
     }
 
     private RandomAccessFile randomAccessFile;
-    public RandomAccessFile getRandomAccessFile() throws IOException {
+    public synchronized RandomAccessFile getRandomAccessFile() throws IOException {
         if (randomAccessFile==null) randomAccessFile = new RandomAccessFile(getFullPath(),"r");
         return randomAccessFile;
     }

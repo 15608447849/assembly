@@ -35,13 +35,13 @@ public class NetworkUtil {
                 sb.append(line+"\n");
             }
             br.close();
-            Log.i(sb.toString());
+
             if (!sb.toString().equals("")) {
-                line = "";
                 if (sb.toString().indexOf("TTL") > 0) {
                     // 网络畅通
                     connect = true;
                 } else {
+                    Log.i(sb.toString());
                     // 网络不畅通
                     connect = false;
                 }

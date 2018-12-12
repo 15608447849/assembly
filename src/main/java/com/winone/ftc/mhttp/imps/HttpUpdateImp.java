@@ -16,6 +16,7 @@ import java.net.URLDecoder;
 /**
  * Created by lzp on 2017/5/9.
  *  http 上传
+ *  表单上传实现
  */
 public class HttpUpdateImp extends Excute {
     public HttpUpdateImp(Mftcs manage) {
@@ -59,6 +60,7 @@ public class HttpUpdateImp extends Excute {
         }
 
         state.setRecord(true); //开始记录
+        final String formName = task.getFormName();
         final String LINEND = "\r\n";
         final String PREFFIX = "--";
         final String BOUNDARY = "*****";
@@ -86,8 +88,9 @@ public class HttpUpdateImp extends Excute {
             httpURLConnection.setChunkedStreamingMode(0);//直接将流提交到服务器上。
             dos = new DataOutputStream(httpURLConnection.getOutputStream());
             dos.writeBytes(PREFFIX + BOUNDARY + LINEND);
+            //<p>Last name: <input type="ftc" name="lname" /></p>
             dos.writeBytes("Content-Disposition: form-data;" +  //类型
-                    "name=\"ftc\";" +    //域名
+                    "name=\""+formName+"\";" +    //域名
                     "filename=\"" + remoteFileName + "\";"
                     + LINEND);
             dos.writeBytes("Content-Type: application/octet-stream"+ LINEND);

@@ -12,8 +12,8 @@ import java.nio.ByteBuffer;
  */
 public class SessionOperation {
 
-
     private final Session session ;
+
     public SessionOperation(Session session) {
         this.session = session;
     }
@@ -28,9 +28,10 @@ public class SessionOperation {
      *
      */
     public void writeString(String message,String charset){
+
         charset = StringUtil.isEntry(charset)?"utf-8":charset;
 
-        byte[] data = null;
+        byte[] data;
         try {
             data = message.getBytes(charset);
         } catch (UnsupportedEncodingException e) {
@@ -38,7 +39,7 @@ public class SessionOperation {
             return;
         }
         byte[] charsetBytes_ascii = Protocol.stringToAscii(charset);
-        if(data==null || data.length==0) return;
+        if(data.length == 0) return;
         ByteBuffer buf = session.getStore().getSendBufferBySystemTcpStack();//清空
         Protocol.protocol(buf,Protocol.STX,charsetBytes_ascii.length);
         buf.put(charsetBytes_ascii);
@@ -60,12 +61,9 @@ public class SessionOperation {
 
             int sliceSum = length / capacity;
             int mod = length % capacity;
-            Log.println("切割数据 : "+ offset+" - "+ (offset+length)+" , 长度:"+ length+" ,切分片段数:"+sliceSum+" 剩余:"+mod);
-
+//            Log.i("切割数据 : "+ offset+" - "+ (offset+length)+" , 长度:"+ length+" ,切分片段数:"+sliceSum+" 剩余:"+mod);
             for (int i=0;i<sliceSum;i++){
-
-                    Log.println("           "+ (offset+(i*capacity))+" - "+ (offset+(i*capacity)+capacity));
-
+//                    Log.i("           "+ (offset+(i*capacity))+" - "+ (offset+(i*capacity)+capacity));
                 writeBytes(bytes,offset+(i*capacity),capacity);
             }
             if (mod>0){

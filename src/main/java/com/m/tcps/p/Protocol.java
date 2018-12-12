@@ -124,11 +124,11 @@ public class Protocol {
     public static void main(String[] args){
         byte EOT =8;
         byte[] a = new String(" ").getBytes();
-        Log.println(getBit(EOT));
+        Log.i(getBit(EOT));
         String s = "GBK";
         byte[] d = stringToAscii(s);
 
-        Log.println(Arrays.toString(d),asciiToString(d));
+        Log.i(Arrays.toString(d),asciiToString(d));
     }
 
     public static byte[] intToByteArray(int a) {

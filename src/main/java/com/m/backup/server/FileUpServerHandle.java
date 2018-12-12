@@ -1,9 +1,7 @@
 package com.m.backup.server;
 
 import com.google.gson.Gson;
-import com.m.tcps.p.SocketImp;
 import com.winone.ftc.mtools.FileUtil;
-import com.winone.ftc.mtools.Log;
 import com.m.backup.imps.Protocol;
 import com.m.backup.slice.*;
 import com.m.tcps.p.FtcTcpActionsAdapter;
@@ -32,39 +30,38 @@ public class FileUpServerHandle extends FtcTcpActionsAdapter {
     private List<SliceMapper2> same_slice_list = null;//差异传输 当前本地存在的相同数据块
     private long capacity = 0;//差异传输 当前差异块应接收的数据总量
     private int index = 0;//差异传输 - 当前差异块下标
-    public FileUpServerHandle(SocketImp socketImp, FtcBackupServer ftcBackupServer) {
+    public FileUpServerHandle(Session session, FtcBackupServer ftcBackupServer) {
         this.ftcBackupServer = ftcBackupServer;
-        flag = socketImp.getSocket().toString()+"-"+getClass().getSimpleName()+"-"+ftcBackupServer.getSockSer().getCurrentClientSize()+" >>  ";
-//        Log.println(flag,"连接服务器成功.");
+        this.flag = session.getSocketImp().getSocket().toString()+"-"+getClass().getSimpleName()+"-"+ftcBackupServer.getSockSer().getCurrentClientSize()+" >>  ";
+//        Log.i(flag,"服务端文件上传处理-创建");
+        session.getSocketImp().setAction(this);//绑定传输管道
+        session.getSocketImp().getSession().getOperation().writeString("start","utf-8");
     }
 
     @Override
     public void receiveString(Session session, String message) {
+//            Log.i(flag,message);
             Map<String,String> map = gson.fromJson(message,Map.class);
             handle(session,map);
     }
 
     @Override
     public void connectClosed(Session session) {
-//         Log.println(flag,"连接关闭,资源清理.");
         closeResource();
+//        Log.i(flag,"连接关闭,资源清理");
     }
-
-
-
 
     /**
      * 处理
      */
     private void handle(Session session,Map<String, String> map) {
         String protocol = map.get("protocol");
-//        Log.println(flag,protocol+" , " +map.get("filename"));
         if (protocol.equals(Protocol.C_FILE_BACKUP_QUEST)){
-            ClientFileBackupQuest(session,map);
+            backupRequest(session,map);
         }else if (protocol.equals(Protocol.C_FILE_BACKUP_TRS_START)){
-            receiveFile(map);
+            receiveFileStart(session,map);
         }else if (protocol.equals(Protocol.C_FILE_BACKUP_TRS_END)){
-            receiveFileOver(session,map);
+            receiveFileEnd(session,map);
         }
     }
 
@@ -73,7 +70,7 @@ public class FileUpServerHandle extends FtcTcpActionsAdapter {
      * 客户端文件同步请求
      * @param map
      */
-    private void ClientFileBackupQuest(Session  session,Map<String, String> map)  {
+    private void backupRequest(Session  session, Map<String, String> map)  {
         String dir_path = ftcBackupServer.getDirectory()+map.get("path");
         map.put("protocol",Protocol.S_FILE_BACKUP_QUEST_ACK);
         String slice = "Node";
@@ -82,7 +79,15 @@ public class FileUpServerHandle extends FtcTcpActionsAdapter {
             //目录不存在,创建目录
             dir_file.mkdirs();
         }else{
-            File file = new File(dir_path+map.get("filename"));
+            String file_name = map.get("filename");
+            if (file_name.endsWith(SUFFER)){
+                //此文件后缀不进行同步
+                map.put("protocol",Protocol.S_FILE_BACKUP_TRS_OVER);
+                session.getOperation().writeString(gson.toJson(map),map.get("charset"));
+                return;
+            }
+            File file = new File(dir_path+file_name);
+
             if (file.exists()){
                 //切片
                 int sliceSize = Integer.parseInt(map.get("block"));
@@ -101,8 +106,9 @@ public class FileUpServerHandle extends FtcTcpActionsAdapter {
         if (randomAccessFile!=null){
             try {
                 randomAccessFile.close();
-                randomAccessFile= null;
             } catch (IOException e) {
+            }finally {
+                randomAccessFile= null;
             }
         }
 
@@ -119,10 +125,19 @@ public class FileUpServerHandle extends FtcTcpActionsAdapter {
         }
     }
     //接受客户端发送的传输开始请求
-    private void receiveFile(Map<String, String> map) {
+    private void receiveFileStart(Session session, Map<String, String> map) {
         closeResource();
         String fs_path = ftcBackupServer.getDirectory()+map.get("path")+map.get("filename")+ SUFFER; //获取备份后缀的文件
         long length = Long.valueOf(map.remove("length")); //获取文件大小
+        if (FileUtil.checkFile(fs_path)){
+            //存在一个备份文件
+            if (!FileUtil.deleteFile(fs_path)){
+                //无法删除
+                map.put("protocol",Protocol.S_FILE_BACKUP_TRS_OVER);
+                session.getOperation().writeString(gson.toJson(map),map.get("charset"));
+                return;
+            }
+        }
         String trs_type = map.remove("translate");//传输类型 增量或者全部
         if(trs_type.equals("diff")){
             isDiffTranslate = true;
@@ -154,9 +169,9 @@ public class FileUpServerHandle extends FtcTcpActionsAdapter {
         try {
             randomAccessFile = new RandomAccessFile(fs_path,"rw");
             randomAccessFile.setLength(length);
-            if (trs_type.equals("all")){
+            if (trs_type.equals("all")){ //全量
                 randomAccessFile.seek(0);
-            }else{
+            }else{ //增量
                 randomAccessFile.seek(diff_slice_list.get(index).getPosition());
             }
         } catch (Exception e) {
@@ -164,46 +179,53 @@ public class FileUpServerHandle extends FtcTcpActionsAdapter {
         }
     }
 
-    //接受完成
-    private void receiveFileOver(Session session,Map<String, String> map) {
+    //接受完成 (客户端通知 文件传输完成)
+    private void receiveFileEnd(Session session, Map<String, String> map) {
+
+        if (randomAccessFile==null) return;
 
         //获取备份后缀的文件
         String fs_path = ftcBackupServer.getDirectory()+map.remove("path")+map.remove("filename");
-        if (randomAccessFile!=null){
-            if (isDiffTranslate){
-                RandomAccessFile localSrcBlock = null;
-                try {
-                    //复制 文件块
-                    localSrcBlock = new RandomAccessFile(fs_path, "r");
 
-                    byte[] buf = new byte[Integer.parseInt(map.remove("block"))];
-                    for (SliceMapper2 slice : same_slice_list) {
-                            localSrcBlock.seek(slice.getMapperPostion());
-                            localSrcBlock.read(buf, 0, (int) slice.getLength());
-                            randomAccessFile.seek(slice.getPosition());
-                            randomAccessFile.write(buf, 0, (int) slice.getLength());
-                    }
+        if (isDiffTranslate){
+            RandomAccessFile localSrcBlock = null;
+            try {
+                //复制 文件块
+                localSrcBlock = new RandomAccessFile(fs_path, "r");
+
+                byte[] buf = new byte[Integer.parseInt(map.remove("block"))];
+
+                for (SliceMapper2 slice : same_slice_list) {
+                    localSrcBlock.seek(slice.getMapperPostion());
+                    localSrcBlock.read(buf, 0, (int) slice.getLength());
+                    randomAccessFile.seek(slice.getPosition());
+                    randomAccessFile.write(buf, 0, (int) slice.getLength());
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }finally {
+                try {
+                    localSrcBlock.close();
                 } catch (IOException e) {
-                    e.printStackTrace();
-                }finally {
-                    try {
-                        localSrcBlock.close();
-                    } catch (IOException e) {
-                    }
                 }
             }
         }
+
         closeResource();
         if (FileUtil.rename(new File(fs_path+ SUFFER), new File(fs_path))){
             FileUtil.deleteFile(fs_path+ SUFFER);
         }
+
         map.put("protocol",Protocol.S_FILE_BACKUP_TRS_OVER);
         session.getOperation().writeString(gson.toJson(map),map.get("charset"));
     }
 
-
+    //接受文件
+//    long cpos = 0;
     @Override
     public void receiveBytes(Session session, byte[] bytes) {
+//            cpos+=bytes.length;
+//            Log.i("已传输字节数:"  + cpos);
             if (randomAccessFile!=null){
                 try {
                     randomAccessFile.write(bytes);
@@ -222,4 +244,6 @@ public class FileUpServerHandle extends FtcTcpActionsAdapter {
                 }
             }
     }
+
+
 }

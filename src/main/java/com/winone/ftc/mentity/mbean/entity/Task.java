@@ -13,6 +13,8 @@ import java.util.*;
  *  任务对象
  */
 public class Task {
+
+
     // 任务类型
     public enum Type{
         HTTP_UP,HTTP_DOWN,FTP_UP, FTP_DOWN,STREAM_UP,NOME
@@ -60,6 +62,18 @@ public class Task {
     private long downloadLimitMax = 0;
     //上传最大速度限制
     private long updateLimitMax = 0;
+
+    private String formName = "ftc";
+
+    public Task setFormName(String formName) {
+        this.formName = formName;
+        return this;
+    }
+
+    //表单传输时 的域名
+    public String getFormName() {
+        return formName;
+    }
 
     private TaskRecord mResult = new TaskRecord();
     //返回记录文件的回调
@@ -235,8 +249,9 @@ public class Task {
         return params;
     }
 
-    public void setParams(HashMap<String, String> params) {
+    public Task setParams(HashMap<String, String> params) {
         this.params = params;
+        return this;
     }
 
     public InputStream getInStream() {

@@ -59,7 +59,6 @@ public class ClientConnect implements SocketImp{
     @Override
     public void close(){
         try {
-
             if (isAlive()){
                 socket.shutdownInput();
                 socket.shutdownOutput();

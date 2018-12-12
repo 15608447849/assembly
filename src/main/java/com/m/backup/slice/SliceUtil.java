@@ -25,7 +25,6 @@ public class SliceUtil {
         //按照  (512 / 100*1024*2) >> (0.025) 的比例换算
         int sliceSize = (int) (fileSize *  0.025);
         return sliceSize>0?sliceSize:512;
-
     }
 
 
@@ -55,7 +54,7 @@ public class SliceUtil {
 
                 randomAccessFile.seek(position);
                 randomAccessFile.read(buffer,0,len);
-//                Log.println("数据分片: "+ new String(buffer,0,len)+" , "+ " - "+ len);
+//                Log.i("数据分片: "+ new String(buffer,0,len)+" , "+ " - "+ len);
                 sliceInfo = new SliceInfo();
                 sliceInfo.setPosition(position);
                 sliceInfo.setLength(len);
@@ -155,17 +154,17 @@ public class SliceUtil {
                 }
 
                 if (moveBlock){
-//                    Log.println("移动块 : ",(Math.min((int)(fileLength-position),sliceSize)<sliceSize)?(int)(fileLength-position):sliceSize);
+//                    Log.i("移动块 : ",(Math.min((int)(fileLength-position),sliceSize)<sliceSize)?(int)(fileLength-position):sliceSize);
                     position+=sliceSize;//向后移动一块数据
 
                 }else{
-//                    Log.println("移动格子 : ",(Math.min((int)(fileLength-position),move)<move)?1:move);
+//                    Log.i("移动格子 : ",(Math.min((int)(fileLength-position),move)<move)?1:move);
                     position+=move;  //向后偏移文件大小的1% 字节
 
                 }
-//                Log.println("滚动检测: ", position ," , " +fileLength," , " ,NumberFormat.getInstance().format((double)position/(double)fileLength * 100),"%");
+//                Log.i("滚动检测: ", position ," , " +fileLength," , " ,NumberFormat.getInstance().format((double)position/(double)fileLength * 100),"%");
                 if (position>fileLength) break;
-//                Log.println("滚动检测: ", position ," , " +fileLength," , " ,NumberFormat.getInstance().format((double)position/(double)fileLength * 100),"%");
+//                Log.i("滚动检测: ", position ," , " +fileLength," , " ,NumberFormat.getInstance().format((double)position/(double)fileLength * 100),"%");
             }
 
             //根据相同的 确定不同的坐标

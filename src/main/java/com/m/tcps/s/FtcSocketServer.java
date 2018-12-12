@@ -32,7 +32,6 @@ public class FtcSocketServer implements CompletionHandler<AsynchronousSocketChan
     public FtcSocketServer(InetSocketAddress address,FtcTcpServerActions action) {
         this.address = address;
         this.action = action;
-
     }
 
 
@@ -40,7 +39,7 @@ public class FtcSocketServer implements CompletionHandler<AsynchronousSocketChan
     public FtcSocketServer openListener() throws IOException{
         listener = AsynchronousServerSocketChannel.open(AsynchronousChannelGroup.withThreadPool(Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors()))).bind(address);
         listener.setOption(StandardSocketOptions.SO_REUSEADDR,true);
-//        Log.println("TCP SERVER LISTEN : ", listener.getLocalAddress());
+//        Log.i("TCP SERVER LISTEN : ", listener.getLocalAddress());
         return this;
     }
     //开始接入

@@ -50,7 +50,7 @@ public class FBCWatchServer extends FileAlterationMonitor implements FileAlterat
     }
     @Override
     public void onFileChange(File file) {
-//        Log.println("文件改变 "+file+"  "+ new SimpleDateFormat("HH:mm:ss").format(new Date(file.lastModified())) );
+//        Log.i("文件改变 "+file+"  "+ new SimpleDateFormat("HH:mm:ss").format(new Date(file.lastModified())) );
         modifyList.add(file);
     }
     @Override

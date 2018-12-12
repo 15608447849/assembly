@@ -48,7 +48,7 @@ public class HttpLoadImp extends Excute{
             httpURLConnection.setRequestProperty("Charset", "UTF-8");
             httpURLConnection.setRequestProperty("Content-type", "application/octet-stream");
             httpURLConnection.setRequestProperty("Range", "bytes=" +0 + "-");
-            httpURLConnection.setRequestProperty("Accept-Encoding", "identity");
+            httpURLConnection.setRequestProperty("Accept-Encoding", "identity");//https://my.oschina.net/u/133352/blog/96582
             TaskUtils.connectParam(httpURLConnection,task.getParams());
 
             httpURLConnection.setDefaultUseCaches(false);
@@ -58,6 +58,7 @@ public class HttpLoadImp extends Excute{
             httpURLConnection.setReadTimeout(10*1000);//读取超时
             httpURLConnection.connect();
             int code = httpURLConnection.getResponseCode();
+
             if( code == 206 || code == 200){
                 fileLength = httpURLConnection.getContentLength();
                 if (fileLength<=0) fileLength=httpURLConnection.getContentLengthLong();

@@ -30,6 +30,13 @@ public class Log {
             writeLogWrite(TAG +"  "+ message);
         }
     }
+    public static void i(Object... arr){
+        StringBuilder stringBuilder = new StringBuilder();
+        for(Object  obj : arr){
+            stringBuilder.append(obj);
+        }
+        System.out.println(TAG +" "+getTimeString(0)+" # "+ stringBuilder.toString());
+    }
 
     public static void w(String TAG,String message){
         if (print) {

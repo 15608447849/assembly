@@ -158,7 +158,7 @@ public class MThreadManage extends Thread{
                 if (thread.getDleTime() > TIME){
                     if (thread.over()){
                         mThreadIterator.remove();
-                        Log.w("成功移除空闲下载线程: "+ thread.getName());
+                        Log.w("成功移除空闲线程: "+ thread.getName());
                     }
                 }
             }

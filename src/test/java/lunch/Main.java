@@ -1,5 +1,8 @@
 package lunch;
 
+import com.m.tcps.p.SocketImp;
+import com.m.tcps.s.FtcSocketServer;
+import com.m.tcps.s.FtcTcpServerActions;
 import com.winone.ftc.mcore.imps.FtcManager;
 
 import com.winone.ftc.mentity.mbean.entity.ManagerParams;
@@ -9,6 +12,8 @@ import com.winone.ftc.mentity.mbean.entity.TaskFactory;
 
 import com.winone.ftc.mtools.Log;
 
+import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.*;
 
 public class Main{
@@ -18,31 +23,39 @@ public class Main{
 //        cli();
 //        execute();
 //        upload();
-        uploadFTP();
+//        uploadFTP();
 //        TEST_();
-//        httpDown();
+        httpDown();
 
 //        down("http://172.16.0.201:8080/lee/1.zip");
 //        down(args[0]);
+
+//        ticServer();
+
     }
+
 
     private static void down(String url) {
 
-        FtcManager.get().execute(TaskFactory.httpTaskDown(url,
+        FtcManager.get().execute(TaskFactory.httpTaskDown(
+                url,
                 "GET",
                 "./temp",
                 url.substring(url.lastIndexOf("/")+1),
                 true,"2d29de32451df9fe070e2e3e4e7a3dc3"));
     }
-
     private static void httpDown() {
         FtcManager.get().initial(new ManagerParams(4,false,true,false));
-
-        FtcManager.get().execute(TaskFactory.httpTaskDown("http://bfo.clientdown.sdo.com/GA_2.26.2.0_20170818/GA_client_2.26.2.0_20170818.exe",
+        FtcManager.get().execute(
+                TaskFactory.httpTaskDown(
+                 "http://pic1.win4000.com/pic/5/8e/e3d0f556ea.jpg?down",
                 "GET",
-                "C:\\FileServerDirs\\TEST",
-                "rxyh.exe",
-                true).setDownloadLimitMax(200));
+                "C:\\",
+                "1020116405-6.jpg",
+                true)
+
+//                        .setDownloadLimitMax(200)
+        );
 //        ManagerImp.get().execute(TaskFactory.httpTaskDown(" http://mxd.clientdown.sdo.com.sd.qcloudcdn.com/145/Data145.zip",
 //                "GET",
 //                "C:\\FileServerDirs\\TEST",
@@ -86,7 +99,6 @@ public class Main{
 
 //        while (true);
     }
-
     private static void test() {
 
         String url= "ftp://admin:admin@172.16.0.248:9595/screencut/001430102001009.png";
@@ -103,33 +115,10 @@ public class Main{
 
 
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     private static int success=0,fait=0;
     private static void S(){
         Log.i("成功:"+success+" ,失败:"+ fait);
     }
-
-
-
     private static void uploadFTP() {
         FtcManager.get().execute(
                 TaskFactory.ftpTaskUpdate(
@@ -149,18 +138,16 @@ public class Main{
                 })
         );
     }
-
     private static void upload() {
                 FtcManager.get().execute(
                 TaskFactory.httpTaskUpdate(
-                        "http://172.16.0.200:8080/ftc/upload",
+                        "http://192.168.1.240:8090/fileUpload",
                         "POST",
-                        "C:\\FileServerDirs\\source",
-                        "bg_1.jpg",
-                        "李兆平","测试.png")
+                        "E:\\迅雷下载",
+                        "WIN.7_SP1_.X64_V2018.iso",
+                        "iso","WIN.7_SP1_.X64_V2018.iso").setFormName("file")
                 );
     }
-
     private static void execute() {
 
         HashMap<String,String> map = new HashMap<>();
@@ -271,7 +258,17 @@ public class Main{
 //                        false));
     }
 
+    private static void ticServer() {
+        try {
+            FtcSocketServer ftcSocketServer = new FtcSocketServer(new
+                    InetSocketAddress("192.168.1.126", 7777), null);
+            ftcSocketServer.openListener().launchAccept();
+            while (true);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
+    }
 
 
 

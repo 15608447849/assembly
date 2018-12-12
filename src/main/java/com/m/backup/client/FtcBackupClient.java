@@ -9,8 +9,6 @@ import com.winone.ftc.mtools.Log;
 import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.Socket;
-import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,14 +38,18 @@ public class FtcBackupClient extends FtcBackAbs {
         this.watchServer = new FBCWatchServer(this);
     }
 
+    /**
+     * 绑定socket客户端
+     */
     protected void bindSocketClient(BackupFileInfo backupFileInfo) throws InterruptedException{
         FileUpClientSocket socketClient;
         while (true){
 
             try {
                 socketClient = socketList.getSocket(backupFileInfo.getServerAddress());
+//                Log.i(Thread.currentThread()+" 远程同步socket管道 ,是否连接 : "+ socketClient.isConnected());
                 if (socketClient!=null) {
-//                    Log.println("执行 "+backupFileInfo);
+//                    Log.i(Thread.currentThread() + " 执行上传 "+backupFileInfo);
                     socketClient.setCur_up_file(backupFileInfo);
                     break;
                 }
@@ -57,12 +59,9 @@ public class FtcBackupClient extends FtcBackAbs {
                    backupFileInfo.setLoopCount(backupFileInfo.getLoopCount()+1);
                    break;
                }else if (e instanceof IllegalStateException){
-                   //当前最大连接数,无法获取连接,检测并把当前任务放入队列
-                   int time = socketList.check();
-//                   Log.println("最大连接,请等待至多 "+time+ " 秒");
-                   synchronized (FtcBackupClient.this){
-                       FtcBackupClient.this.wait(time);
-                   }
+                   //当前已到达最大连接数,无法获取连接,检测并把当前任务放入队列
+//                   Log.i("socket队列已到最大连接数,进入等待");
+                   lockBindSocket();
                }else{
                    e.printStackTrace();
                }
@@ -70,11 +69,28 @@ public class FtcBackupClient extends FtcBackAbs {
         }
     }
 
+    private void lockBindSocket() {
+        synchronized (this){
+            try {
+                wait();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void unLockBindSocket() {
+        synchronized (this){
+                notify();
+        }
+    }
 
 
-
+    /**
+     * 添加一个文件到任务列表
+     */
     public boolean addBackupFile(File file,InetSocketAddress serverAddress) throws IOException {
-//        Log.println(file);
+//        Log.i("添加同步文件 >> ",file);
         String path  = FileUtil.replaceFileSeparatorAndCheck(file.getCanonicalPath(),null,null);
         if (path.contains(directory)){
            path = path.substring(directory.length());
@@ -83,14 +99,16 @@ public class FtcBackupClient extends FtcBackAbs {
         return false;
     }
 
-
+    /**
+     * 遍历目录
+     */
     public void ergodicDirectory(InetSocketAddress serverAddress){
         this.fileVisitor.startVisitor(serverAddress);
     }
 
     /**
+     * 在某个时间段进行同步
      * list - {"11:00:00","2017-11-27 14:00:00"}
-     * @param json
      */
     public void setTime(String json){
         try {
@@ -133,6 +151,7 @@ public class FtcBackupClient extends FtcBackAbs {
     private synchronized void setServerAddress(InetSocketAddress serverAddress) {
         if (serverAddressList==null) serverAddressList = new ArrayList<>();
         if (!serverAddressList.contains(serverAddress)){
+//            Log.i("添加远程同步服务器地址 >> ",serverAddress);
             serverAddressList.add(serverAddress);
         }
     }
@@ -140,5 +159,6 @@ public class FtcBackupClient extends FtcBackAbs {
     public synchronized List<InetSocketAddress> getServerAddressList() {
         return serverAddressList;
     }
+
 
 }
