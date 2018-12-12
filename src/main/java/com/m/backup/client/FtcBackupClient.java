@@ -102,8 +102,8 @@ public class FtcBackupClient extends FtcBackAbs {
     /**
      * 遍历目录
      */
-    public void ergodicDirectory(InetSocketAddress serverAddress){
-        this.fileVisitor.startVisitor(serverAddress);
+    public void ergodicDirectory(InetSocketAddress serverAddress,String... filterSuffix){
+        this.fileVisitor.startVisitor(serverAddress,filterSuffix);
     }
 
     /**
