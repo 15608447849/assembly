@@ -33,11 +33,17 @@ public class FileVisitor extends SimpleFileVisitor<Path>{
     public FileVisitResult visitFile(Path filePath, BasicFileAttributes attrs) {
 
         try {
+            boolean isAdd = true;
             File file = filePath.toFile();
-            String suffix = file.getName().substring(file.getName().lastIndexOf("."));
-            if (!filterSuffixList.contains(suffix)){
-                ftcBackupClient.addBackupFile(filePath.toFile(),this.serverAddress);//添加一个同步文件
+            String fileName = file.getName();
+            if (fileName.contains(".")){
+                String suffix = file.getName().substring(file.getName().lastIndexOf("."));
+                if (filterSuffixList.contains(suffix)){
+                    isAdd = false;
+                }
             }
+
+            if (isAdd) ftcBackupClient.addBackupFile(filePath.toFile(),this.serverAddress);//添加一个同步文件
 
         } catch (IOException e) {
             e.printStackTrace();
