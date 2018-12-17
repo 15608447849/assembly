@@ -28,7 +28,7 @@ public class FtcBackupServer extends FtcBackAbs {
         //启动服务
         sockSer.openListener().launchAccept();
         //创建一个同步功能的客户端
-        client = new FtcBackupClient(directory,100,10000);
+        client = new FtcBackupClient(directory,32,1000);
     }
 
     public FtcSocketServer getSockSer() {

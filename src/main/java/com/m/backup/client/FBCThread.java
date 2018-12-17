@@ -8,6 +8,8 @@ public abstract class FBCThread extends Thread {
     protected boolean isRunning = true;
     public FBCThread(FtcBackupClient ftcBackupClient) {
         this.ftcBackupClient = ftcBackupClient;
+        this.setName("ftc-t-"+getId());
+        this.setDaemon(true);
         this.start();
     }
 

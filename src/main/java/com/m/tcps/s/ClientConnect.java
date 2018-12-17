@@ -68,6 +68,7 @@ public class ClientConnect implements SocketImp{
             server.remove(this);//服务器 队列中移除一个连接管理对象.
         } catch (IOException e) {
             cAction.error(session,null,e);
+            cAction.connectClosed(session);
         }finally {
             socket = null;
             server = null;

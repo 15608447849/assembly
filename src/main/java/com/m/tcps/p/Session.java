@@ -41,6 +41,7 @@ public abstract class Session implements CompletionHandler<Integer, ByteBuffer>{
             if (integer == -1){
                 //一个客户端 连接异常
                 socketImp.getAction().error(this,null, new SocketException("socket connect is closed."));
+                socketImp.getAction().connectClosed(this);
                 return;
             }
             if (integer > 0){
@@ -55,6 +56,7 @@ public abstract class Session implements CompletionHandler<Integer, ByteBuffer>{
     public void failed(Throwable throwable, ByteBuffer buffer) {
         //读取数据异常
         socketImp.getAction().error(this,throwable,null);
+        socketImp.getAction().connectClosed(this);
     }
 
     /**
@@ -90,6 +92,7 @@ public abstract class Session implements CompletionHandler<Integer, ByteBuffer>{
                     } catch (Exception e) {
                         //发送数据异常
                         socketImp.getAction().error(this,null,e);
+                      socketImp.getAction().connectClosed(this);
                     }
                 }
     }

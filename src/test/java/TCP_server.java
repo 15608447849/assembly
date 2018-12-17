@@ -12,7 +12,6 @@ public class TCP_server {
         FtcBackupServer ftcBackupServer = new FtcBackupServer(
                 "C:\\ftcServer",
                 new InetSocketAddress("192.168.1.45",7777));
-//        while (true);
-        Log.println("- - - - - - - - - - -");
+        while (true);
     }
 }

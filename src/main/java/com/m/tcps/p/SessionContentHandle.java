@@ -188,7 +188,7 @@ class SessionContentHandle extends Thread{
             message = new String(bytes,charset);
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
-            communication.error(session,e.getCause(),e);
+            communication.error(session,null,e);
             message = new String(bytes);
         }
         communication.receiveString(session,message);

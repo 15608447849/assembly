@@ -42,18 +42,25 @@ public class FtcSocketClient implements SocketImp, CompletionHandler<Void, Void>
     }
     //连接服务器
     public void connectServer() throws IOException{
+
         if (isAlive()) return;
+
         if (asynchronousChannelGroup==null){
             asynchronousChannelGroup =AsynchronousChannelGroup.withThreadPool(Executors.newSingleThreadExecutor());
         }
+
         socket = AsynchronousSocketChannel.open(asynchronousChannelGroup);
+
         if (localAddress!=null){
             socket.bind(localAddress);
         }
+
         socket.setOption(StandardSocketOptions.SO_KEEPALIVE,true);//保持连接
+
         socket.setOption(StandardSocketOptions.TCP_NODELAY,true);
 
         socket.connect(serverAddress,null,this);
+
         String localAddress = socket.getLocalAddress().toString();
         //等待连接
         synchronized (this){
@@ -86,28 +93,28 @@ public class FtcSocketClient implements SocketImp, CompletionHandler<Void, Void>
         synchronized (this){
             notify();
         }
-        closeConnect();
         communicationAction.error(session,throwable,null);
         communicationAction.connectFail(session);
+        communicationAction.connectClosed(session);
     }
 
     /**
      * 关闭连接
      */
     private void closeConnect() {
+        if (socket == null) return;
+//        Log.e("socket 客户端关闭连接");
         session.clear();//清理会话
-        if (socket==null) return;
         try {
             socket.shutdownOutput();
             socket.shutdownInput();
             socket.close();
+
         } catch (Exception e) {
-            if (e instanceof AsynchronousCloseException) return;
             communicationAction.error(session,null,e);
         }finally {
-            socket = null;
             isConnected = false;
-            communicationAction.connectClosed(session);
+            socket = null;
         }
     }
 

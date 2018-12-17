@@ -54,8 +54,13 @@ class FBCThreadBySocketList extends FBCThread {
                 if ( !socket.isUsing() &&  socket.isIdle(_TIME)){
                     if (socket.isConnected()) {
                         socket.close();
-//                        Log.i(socket.getFlag()," 关闭连接并移除");
+//                        Log.i(socket.getFlag(),"空闲,关闭连接并移除");
                     }
+                    iterator.remove();
+                    isNotify = true;
+                }else if ( socket.isIdle(_TIME * 5)){
+                    socket.close();
+                    Log.e(socket.getFlag(),"超时,关闭连接并移除");
                     iterator.remove();
                     isNotify = true;
                 }

@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.winone.ftc.mtools.FileUtil;
 import com.m.backup.imps.FtcBackAbs;
 import com.m.backup.beans.BackupFileInfo;
+import com.winone.ftc.mtools.IOThreadPool;
 import com.winone.ftc.mtools.Log;
 
 import java.io.File;
@@ -38,12 +39,15 @@ public class FtcBackupClient extends FtcBackAbs {
         this.watchServer = new FBCWatchServer(this);
     }
 
+
+
+
+
     /**
      * 绑定socket客户端
      */
-    protected void bindSocketClient(BackupFileInfo backupFileInfo) throws InterruptedException{
+    protected void bindSocketSyncUpload(BackupFileInfo backupFileInfo) throws InterruptedException{
         FileUpClientSocket socketClient;
-        while (true){
 
             try {
                 socketClient = socketList.getSocket(backupFileInfo.getServerAddress());
@@ -51,22 +55,32 @@ public class FtcBackupClient extends FtcBackAbs {
                 if (socketClient!=null) {
 //                    Log.i(Thread.currentThread() + " 执行上传 "+backupFileInfo);
                     socketClient.setCur_up_file(backupFileInfo);
-                    break;
                 }
             } catch (Exception e) {
+                e.printStackTrace();
                if (e instanceof IOException){
-                   //连接不上服务器 ,放入队列 (最多尝试三次)
-                   backupFileInfo.setLoopCount(backupFileInfo.getLoopCount()+1);
-                   break;
+
+                   if (backupFileInfo.getLoopCount() >= 3) return;
+
+                   pool.post(()->{
+                       //连接不上服务器 ,放入队列 (最多尝试三次)
+                       backupFileInfo.setLoopCount(backupFileInfo.getLoopCount()+1);
+                       try {
+                           Thread.sleep(500 * backupFileInfo.getLoopCount());
+                       } catch (InterruptedException e1) {
+                       }
+                       fileQueue.putFileInfo(backupFileInfo);
+                   });
+
+
                }else if (e instanceof IllegalStateException){
-                   //当前已到达最大连接数,无法获取连接,检测并把当前任务放入队列
-//                   Log.i("socket队列已到最大连接数,进入等待");
+                   //当前已到达最大连接数,无法获取连接
+                   Log.e(Thread.currentThread() +" socket队列达到最大连接数: "+ socketList.getCurrentSize());
                    lockBindSocket();
-               }else{
-                   e.printStackTrace();
+                   bindSocketSyncUpload(backupFileInfo);
                }
+
             }
-        }
     }
 
     private void lockBindSocket() {
@@ -84,6 +98,8 @@ public class FtcBackupClient extends FtcBackAbs {
                 notify();
         }
     }
+
+    private final IOThreadPool pool = new IOThreadPool();
 
 
     /**
@@ -103,7 +119,14 @@ public class FtcBackupClient extends FtcBackAbs {
      * 遍历目录
      */
     public void ergodicDirectory(InetSocketAddress serverAddress,String... filterSuffix){
-        this.fileVisitor.startVisitor(serverAddress,filterSuffix);
+       pool.post(() -> {
+           try {
+               this.fileVisitor.startVisitor(serverAddress,filterSuffix);
+           } catch (Exception e) {
+               e.printStackTrace();
+           }
+        });
+
     }
 
     /**

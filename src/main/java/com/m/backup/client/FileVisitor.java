@@ -33,6 +33,7 @@ public class FileVisitor extends SimpleFileVisitor<Path>{
     public FileVisitResult visitFile(Path filePath, BasicFileAttributes attrs) {
 
         try {
+
             boolean isAdd = true;
             File file = filePath.toFile();
             String fileName = file.getName();
@@ -43,7 +44,12 @@ public class FileVisitor extends SimpleFileVisitor<Path>{
                 }
             }
 
-            if (isAdd) ftcBackupClient.addBackupFile(filePath.toFile(),this.serverAddress);//添加一个同步文件
+            if (isAdd)
+            {
+//                Log.i(Thread.currentThread() +" 遍历文件 : "+ filePath.toFile().getCanonicalPath());
+                ftcBackupClient.addBackupFile(filePath.toFile(),this.serverAddress);//添加一个同步文件
+                try {Thread.sleep(100);} catch (InterruptedException e) {}
+            }
 
         } catch (IOException e) {
             e.printStackTrace();

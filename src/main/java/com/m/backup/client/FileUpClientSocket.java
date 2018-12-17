@@ -35,7 +35,7 @@ public class FileUpClientSocket extends FtcTcpActionsAdapter{
 
     public FileUpClientSocket(FBCThreadBySocketList fbcThreadBySocketList, InetSocketAddress serverAddress) throws IOException, InterruptedException {
         this.fbcThreadBySocketList = fbcThreadBySocketList;
-        this.flag = String.format(" 文件同步客户端管道-%d  ",fbcThreadBySocketList.getCurrentSize());
+        this.flag = String.format(" 文件同步客户端管道-%d -> %s",fbcThreadBySocketList.getCurrentSize(),serverAddress.toString());
         this.socketClient = new FtcSocketClient(serverAddress,this);
         this.socketClient.connectServer();//连接服务器
         lock();
@@ -122,6 +122,7 @@ public class FileUpClientSocket extends FtcTcpActionsAdapter{
 
     //文件上传开始点
     private void uploadFile() {
+            endUsingTime = System.currentTimeMillis();
             //1. 通知服务器, 发送文件 相对路径,文件名
             Map<String,String> map = new HashMap<>();
             map.put("charset",CHARSET);
@@ -130,10 +131,12 @@ public class FileUpClientSocket extends FtcTcpActionsAdapter{
             map.put("filename",cur_up_file.getFileName());
             map.put("block",String.valueOf(SliceUtil.sliceSizeConvert(cur_up_file.getFileLength())));
             socketClient.getSession().getOperation().writeString(gson.toJson(map),CHARSET);
+
     }
 
     //处理
     private void handle(Map<String, String> map) {
+        endUsingTime = System.currentTimeMillis();
         String protocol = map.get("protocol");
         if (protocol.equals(Protocol.S_FILE_BACKUP_QUEST_ACK)){
             serverBackupQuestAck(map);
@@ -144,6 +147,7 @@ public class FileUpClientSocket extends FtcTcpActionsAdapter{
 
     //客户端文件请求回执
     private void serverBackupQuestAck(Map<String, String> map) {
+        endUsingTime = System.currentTimeMillis();
         int sliceSize = Integer.parseInt(map.get("block"));
         String slice  = map.remove("slice");
         if (slice.equals("Node")){
@@ -184,7 +188,7 @@ public class FileUpClientSocket extends FtcTcpActionsAdapter{
       set 4 通知关闭连接
      */
     private void backup(Map<String, String> map,SliceScrollResult result) {
-
+        endUsingTime = System.currentTimeMillis();
         if (result!=null){
             String diff_block_str = result.getDifferentBlockSequence();
             map.put("different",diff_block_str);
@@ -224,9 +228,9 @@ public class FileUpClientSocket extends FtcTcpActionsAdapter{
                     }
                 }
             }
-
-            if (isUsing) Log.i(Thread.currentThread(),flag,"结束 ",cur_up_file +
-                  " 速度 = " + (((double)cur_up_file.getFileLength() / 1024) /((double)(System.currentTimeMillis() - endUsingTime) / 1000) +" kb/s" ));
+            double sv = ( cur_up_file.getFileLength() / 1024.0f )/ ((System.currentTimeMillis() - endUsingTime) / 1000.0f);
+            if (isUsing) Log.i(Thread.currentThread(),flag," 结束 ",cur_up_file.getFullPath()," ",
+                    sv > 0.0? " 速度 = " + String.format("%.2f kb/s",sv) : "");
             //传输完成
             map.put("protocol",C_FILE_BACKUP_TRS_END);
             op.writeString(gson.toJson(map),CHARSET); //结束传输
