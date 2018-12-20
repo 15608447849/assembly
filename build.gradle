@@ -24,7 +24,7 @@ def addLibs(String libsPath,def fun){
     }
 }
 dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
+   
     addLibs('libs',
             {
                 file ->

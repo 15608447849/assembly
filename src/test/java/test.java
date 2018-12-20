@@ -1,6 +1,6 @@
-import com.winone.ftc.mtools.MD5Util;
-import com.m.backup.slice.SliceInfo;
-import com.m.backup.slice.SliceMapper;
+import bottle.ftc.tools.MD5Util;
+import bottle.backup.slice.SliceInfo;
+import bottle.backup.slice.SliceMapper;
 
 import java.io.File;
 import java.io.IOException;

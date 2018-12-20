@@ -1,4 +1,4 @@
-import com.m.backup.client.FtcBackupClient;
+import bottle.backup.client.FtcBackupClient;
 
 import java.io.File;
 import java.io.IOException;
@@ -10,45 +10,23 @@ import java.net.InetSocketAddress;
 public class TCP_client {
 
     public static void main(String[] args) throws IOException {
-        InetSocketAddress socketAddress = new InetSocketAddress("172.16.0.203",7777);
-        InetSocketAddress socketAddress2 = new InetSocketAddress("172.16.0.209",7777);
 
-        FtcBackupClient client  = new FtcBackupClient("C:\\ftcServer\\resource\\defaults\\file",
-                2,
+        FtcBackupClient client  = new FtcBackupClient("D:\\ftcServer\\c",
+                64,
                 2000);
-//        client.setServerAddress();
-        new Thread(()->{
-            File file = new File("C:\\ftcServer\\resource\\defaults\\file\\x005.jpg");
-            try {
-                client.addBackupFile(file,socketAddress);//添加一个同步文件
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            file = new File("C:\\ftcServer\\resource\\defaults\\file\\x006.jpg");
-            try {
-                client.addBackupFile(file,socketAddress2);//添加一个同步文件
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            file = new File("C:\\ftcServer\\resource\\defaults\\file\\x001.jpg");
-            try {
-                client.addBackupFile(file,socketAddress);//添加一个同步文件
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            file = new File("C:\\ftcServer\\resource\\defaults\\file\\x002.jpg");
-            try {
-                client.addBackupFile(file,socketAddress2);//添加一个同步文件
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }).start();
-//        client.ergodicDirectory();
 
-//        String  json = "['2017-11-28 10:23:20']";
+        client.addServerAddress(new InetSocketAddress("192.168.1.155",7777));
+//        client.ergodicDirectory();
+//        client.watchDirectory(true);
+//        String  json = "['10:50:20']";
+//        String  json = "['10:50:20','10:55:00','10:59:00','11:03:00']";
 //        client.setTime(json);
 
-        while (true);
+        try {
+            Thread.sleep(1000 * 60 * 60 * 24);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
     }
 }
