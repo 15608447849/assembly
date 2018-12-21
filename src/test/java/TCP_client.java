@@ -15,8 +15,8 @@ public class TCP_client {
                 64,
                 2000);
 
-        client.addServerAddress(new InetSocketAddress("192.168.1.155",7777));
-//        client.ergodicDirectory();
+        client.addServerAddress(new InetSocketAddress("192.168.1.144",7777));
+        client.ergodicDirectory();
 //        client.watchDirectory(true);
 //        String  json = "['10:50:20']";
 //        String  json = "['10:50:20','10:55:00','10:59:00','11:03:00']";

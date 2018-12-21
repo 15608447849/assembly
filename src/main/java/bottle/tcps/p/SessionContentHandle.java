@@ -1,6 +1,8 @@
 package bottle.tcps.p;
 
 
+import bottle.ftc.tools.Log;
+
 import java.io.UnsupportedEncodingException;
 import static bottle.tcps.p.SessionContentStore.RECEIVE_STREAM;
 import static bottle.tcps.p.SessionContentStore.RECEIVE_STRING;
@@ -86,11 +88,11 @@ class SessionContentHandle extends Thread{
 //        Log.i("根据数据 - 处理协议体 :  "+offset+" - "+ (offset+length) +" , size: "+ length);
         if (length>8){
             int _offset =  protocolHandler(bytes,offset,8);//处理协议
-            if (_offset>0){
+            if (_offset>=0){
                 dataCollected(bytes,_offset,length-8);
             }else{
 //                Log.i("数据收集错误");
-                throw new IllegalStateException("bytes read protocol is error.");
+                throw new IllegalStateException("bytes read protocol is error, _offset = " + _offset);
             }
         }else{
 //            Log.i("存入剩余数据");

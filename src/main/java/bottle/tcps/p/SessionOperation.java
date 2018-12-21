@@ -1,5 +1,6 @@
 package bottle.tcps.p;
 
+import bottle.ftc.tools.Log;
 import bottle.ftc.tools.StringUtil;
 
 
@@ -28,6 +29,7 @@ public class SessionOperation {
      */
     public void writeString(String message,String charset){
 
+
         charset = StringUtil.isEntry(charset)?"utf-8":charset;
 
         byte[] data;
@@ -37,13 +39,15 @@ public class SessionOperation {
             writeString(message,"uft-8");
             return;
         }
+
         byte[] charsetBytes_ascii = Protocol.stringToAscii(charset);
         if(data.length == 0) return;
-        ByteBuffer buf = session.getStore().getSendBufferBySystemTcpStack();//清空
+//        Log.i("发送字符串: "+ message+" 编码方式" + charset+" 字节长度"+data.length);
+        ByteBuffer buf = session.getStore().getSendBufferBySystemTcpStack(data.length);//清空
         Protocol.protocol(buf,Protocol.STX,charsetBytes_ascii.length);
         buf.put(charsetBytes_ascii);
         session.send(buf);
-        buf.clear();
+        buf = session.getStore().getSendBufferBySystemTcpStack(data.length);//清空
         Protocol.protocol(buf,Protocol.ETX,data.length);
         buf.put(data);
         //发送消息
@@ -53,13 +57,15 @@ public class SessionOperation {
      * @param bytes 字节数组
      * 协议: NUL +请求(ENQ)+ NUL + EOT + length +  数据
      */
-    public void writeBytes(byte[] bytes,int offset,int length){
-        ByteBuffer buf = session.getStore().getSendBufferBySystemTcpStack();
+    public void writeBytes(byte[] bytes,int offset,int length){ //偏移量,长度
+        ByteBuffer buf = session.getStore().getSendBufferBySystemTcpStack(length);
+
         int capacity = buf.capacity()-8;
+
         if(length > capacity){ //切分数据
 
-            int sliceSum = length / capacity;
-            int mod = length % capacity;
+            int sliceSum = length / capacity; //取整
+            int mod = length % capacity;  //取模
 //            Log.i("切割数据 : "+ offset+" - "+ (offset+length)+" , 长度:"+ length+" ,切分片段数:"+sliceSum+" 剩余:"+mod);
             for (int i=0;i<sliceSum;i++){
 //                    Log.i("           "+ (offset+(i*capacity))+" - "+ (offset+(i*capacity)+capacity));

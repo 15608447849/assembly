@@ -5,7 +5,7 @@ package bottle.backup.client;
  */
 public abstract class FBCThread extends Thread {
     protected FtcBackupClient ftcBackupClient;
-    protected boolean isRunning = true;
+    protected volatile boolean isRunning = true;
     public FBCThread(FtcBackupClient ftcBackupClient) {
         this.ftcBackupClient = ftcBackupClient;
         this.setName("ftc-t-"+getId());

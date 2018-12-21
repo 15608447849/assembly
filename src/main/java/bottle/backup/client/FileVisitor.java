@@ -1,6 +1,7 @@
 package bottle.backup.client;
 
 import bottle.backup.beans.BackupFile;
+import bottle.ftc.tools.Log;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,7 +32,6 @@ public class FileVisitor extends SimpleFileVisitor<Path>{
     }
     @Override
     public FileVisitResult visitFile(Path filePath, BasicFileAttributes attrs) {
-
         boolean isAdd = !ftcBackupClient.isFilterSuffixFile(filePath.toFile());
         if (isAdd) fileList.add(ftcBackupClient.genBackupFile(filePath.toFile()));
 

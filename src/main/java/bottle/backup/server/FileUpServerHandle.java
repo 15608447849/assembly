@@ -41,8 +41,9 @@ public class FileUpServerHandle extends FtcTcpActionsAdapter {
     }
 
     public void bindSession( Session session){
-        this.flag = session.getSocketImp().getSocket().toString()+"-"+getClass().getSimpleName()+"-"+ftcBackupServer.getSockSer().getCurrentClientSize()+" >>  ";
-//        Log.i(flag,"服务端文件上传处理-创建");
+        // session.getSocketImp().getSocket().toString()+"-"+
+        this.flag = getClass().getSimpleName()+"-"+ftcBackupServer.getSockSer().getCurrentClientSize()+" >>  ";
+        Log.i(flag);
         session.getSocketImp().setAction(this);//绑定传输管道
         session.getSocketImp().getSession().getOperation().writeString("start","utf-8");
     }
@@ -67,6 +68,7 @@ public class FileUpServerHandle extends FtcTcpActionsAdapter {
      */
     private void handle(Session session,Map<String, String> map) {
         String protocol = map.get("protocol");
+        Log.i(flag+" "+protocol);
         if (protocol.equals(Protocol.C_FILE_BACKUP_QUEST)){
             backupRequest(session,map);
         }else if (protocol.equals(Protocol.C_FILE_BACKUP_TRS_START)){
@@ -140,12 +142,13 @@ public class FileUpServerHandle extends FtcTcpActionsAdapter {
     }
     //接受客户端发送的传输开始请求
     private void receiveFileStart(Session session, Map<String, String> map) {
-        closeResource();
+        closeResource();//关闭资源
         String fs_path = ftcBackupServer.getDirectory()+map.get("path")+map.get("filename") + SUFFER; //获取备份后缀的文件
         long length = Long.valueOf(map.remove("length")); //获取文件大小
         if (FileUtil.checkFile(fs_path)){
             //存在一个备份文件
             if (!FileUtil.deleteFile(fs_path)){
+//                Log.i(flag+ " 存在文件: "+fs_path);
                 //无法删除
                 map.put("protocol",Protocol.S_FILE_BACKUP_TRS_OVER);
                 session.getOperation().writeString(gson.toJson(map),map.get("charset"));
@@ -154,6 +157,7 @@ public class FileUpServerHandle extends FtcTcpActionsAdapter {
         }
         String trs_type = map.remove("translate");//传输类型 增量或者全部
         if(trs_type.equals("diff")){
+            //增量传输
             isDiffTranslate = true;
             index = 0;
             String diff_block_str = map.remove("different");
@@ -188,6 +192,9 @@ public class FileUpServerHandle extends FtcTcpActionsAdapter {
             }else{ //增量
                 randomAccessFile.seek(diff_slice_list.get(index).getPosition());
             }
+            //告知客户端传输流开始
+            map.put("protocol",Protocol.S_FILE_BACKUP_NOTIFY_STREAM);
+            session.getOperation().writeString(gson.toJson(map),map.get("charset"));
         } catch (Exception e) {
             e.printStackTrace();
         }

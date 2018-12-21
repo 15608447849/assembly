@@ -49,17 +49,17 @@ public class FtcBackupClient extends FtcBackAbs {
      * 绑定socket客户端
      */
     protected void bindSocketSyncUpload(BackupTask task) throws InterruptedException{
-        FileUpClientSocket socketClient;
+        FileUpClientSocket sock;
 
             try {
-                socketClient = socketList.getSocket(task.getServerAddress());
-//                Log.i(Thread.currentThread()+" 远程同步socket管道 ,是否连接 : "+ socketClient.isConnected());
-                if (socketClient!=null) {
+                sock = socketList.getSocket(task.getServerAddress());
+
+                if (sock !=null) {
 //                    Log.i(Thread.currentThread() + " 执行上传 "+backupFileInfo);
                     if (task.getType() == 1){
-                        socketClient.setCurFile(task.getBackupFile());
+                        sock.setCurFile(task.getBackupFile());
                     }else if (task.getType() == 2){
-                        socketClient.setCurList(task.getBackupFileList());
+                        sock.setCurList(task.getBackupFileList());
                     }
 
                 }
@@ -67,7 +67,7 @@ public class FtcBackupClient extends FtcBackAbs {
 
                if (e instanceof IOException){
 
-                   if (task.getLoopCount() > 10) {
+                   if (task.getLoopCount() > 3) {
                        Log.i("无法同步任务到目标服务器("+task.getServerAddress()+")");
                        return;
                    }
@@ -75,10 +75,7 @@ public class FtcBackupClient extends FtcBackAbs {
                    pool.post(()->{
                        //连接不上服务器 ,放入队列 (最多尝试三次)
                        task.incLoopCount();
-                       try {
-                           Thread.sleep(1000 * task.getLoopCount());
-                       } catch (InterruptedException e1) {
-                       }
+                       try { Thread.sleep(1000 * task.getLoopCount()); } catch (InterruptedException ignored) { }
                        fileQueue.putTask(task);
                    });
 
@@ -128,7 +125,7 @@ public class FtcBackupClient extends FtcBackAbs {
      * 添加一个文件到任务列表 - 指定服务器地址
      */
     public void addBackupFile(File file,InetSocketAddress serverAddress) {
-//        Log.i("添加同步文件 >> ",file);
+
         if (isFilterSuffixFile(file)) return;
 
         BackupFile backupFile = genBackupFile(file);
@@ -141,9 +138,7 @@ public class FtcBackupClient extends FtcBackAbs {
      * 从服务器列表获取
      */
     public void addBackupFile(File file) {
-
         if (isFilterSuffixFile(file)) return;
-
         BackupFile backupFile = genBackupFile(file);
         if (backupFile!=null){
             for (InetSocketAddress socket : serverAddressList){
@@ -238,7 +233,7 @@ public class FtcBackupClient extends FtcBackAbs {
     private synchronized void  addServerAddress(InetSocketAddress serverAddress) {
 
         if (!serverAddressList.contains(serverAddress)){
-//            Log.i("添加远程同步服务器地址 >> ",serverAddress);
+            Log.i("添加远程同步服务器地址 >> ",serverAddress);
             serverAddressList.add(serverAddress);
         }
     }

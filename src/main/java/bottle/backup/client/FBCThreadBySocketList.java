@@ -74,11 +74,13 @@ class FBCThreadBySocketList extends FBCThread {
     public FileUpClientSocket getSocket(InetSocketAddress serverAddress) throws Exception{
         try{
             lock.lock();
+//            Log.i(Thread.currentThread()+" 获取socket,当前队列数" + list.size() +" , 最大数:"+ max);
             FileUpClientSocket socket;
             if (list.size()>0){
                 Iterator<FileUpClientSocket> iterator = list.iterator();
                 while (iterator.hasNext()){
                     socket = iterator.next();
+//                    Log.i(Thread.currentThread()+"队列获取socket:"+socket.getFlag());
                     //未使用
                     if (socket.validServerAddress(serverAddress) && !socket.isUsing() && socket.isConnected()){
                         return socket;

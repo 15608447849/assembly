@@ -1,6 +1,8 @@
 package bottle.tcps.c;
 
 
+import bottle.ftc.tools.IOThreadPool;
+import bottle.ftc.tools.Log;
 import bottle.tcps.p.FtcTcpActions;
 import bottle.tcps.p.FtcTcpAioManager;
 import bottle.tcps.p.Session;
@@ -15,6 +17,9 @@ import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 import java.util.List;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+
 /**
  * Created by user on 2017/7/8.
  * 1 发送字符串
@@ -24,7 +29,7 @@ import java.util.concurrent.Executors;
  */
 public class FtcSocketClient implements SocketImp, CompletionHandler<Void, Void>, FtcTcpAioManager {
     //连接等待时间
-    private final int connectingTime;
+    private final long connectingTime;
     public AsynchronousSocketChannel socket;
     private InetSocketAddress localAddress;
     private AsynchronousChannelGroup asynchronousChannelGroup;
@@ -35,7 +40,8 @@ public class FtcSocketClient implements SocketImp, CompletionHandler<Void, Void>
     public FtcSocketClient(InetSocketAddress serverAddress, FtcTcpActions communicationAction) {
         this(null,serverAddress,communicationAction,3000);
     }
-    public FtcSocketClient(InetSocketAddress localAddress, InetSocketAddress serverAddress, FtcTcpActions communicationAction, int reTime) {
+
+    public FtcSocketClient(InetSocketAddress localAddress, InetSocketAddress serverAddress, FtcTcpActions communicationAction, long reTime) {
         this.localAddress = localAddress;
         this.connectingTime = reTime;
         this.serverAddress = serverAddress;
@@ -47,8 +53,8 @@ public class FtcSocketClient implements SocketImp, CompletionHandler<Void, Void>
 
         if (isAlive()) return;
 
-        if (asynchronousChannelGroup==null){
-            asynchronousChannelGroup =AsynchronousChannelGroup.withThreadPool(Executors.newSingleThreadExecutor());
+        if (asynchronousChannelGroup == null){
+            asynchronousChannelGroup = AsynchronousChannelGroup.withThreadPool(Executors.newSingleThreadExecutor());
         }
 
         socket = AsynchronousSocketChannel.open(asynchronousChannelGroup);
@@ -63,18 +69,22 @@ public class FtcSocketClient implements SocketImp, CompletionHandler<Void, Void>
 
         socket.connect(serverAddress,null,this);
 
-        String localAddress = socket.getLocalAddress().toString();
-        //等待连接
-        synchronized (this){
-            try {
-                wait(connectingTime);
-            } catch (InterruptedException e) {
+        if (!isAlive()){
+            //等待连接
+            synchronized (this){
+                try {
+                    this.wait(connectingTime);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+            //如果连接不上服务器 - 报异常
+            if (!isAlive()){
+                throw new SocketException("local client( "+ socket.getLocalAddress() + " ) connect remote server( " + serverAddress + " ) fail.");
             }
         }
-        //如果连接不上服务器 - 报异常
-        if (!isAlive()){
-            throw new SocketException("local client( "+ localAddress + " ) connect remote server( " + serverAddress + " ) fail.");
-        }
+
+
     }
 
 
@@ -82,15 +92,16 @@ public class FtcSocketClient implements SocketImp, CompletionHandler<Void, Void>
     public void completed(Void aVoid, Void aVoid2) {
         isConnected = true;
         synchronized (this){
-            notify();
+            this.notify();
         }
-//        Log.i("成功连接 - "+serverAddress,",启动数据读取...");
+//        Log.i(Thread.currentThread()+ " 成功连接 - "+serverAddress," ","启动数据读取");
         communicationAction.connectSucceed(session);
         session.read();
     }
 
     @Override
     public void failed(Throwable throwable, Void aVoid) {
+//        Log.i("失败连接- "+serverAddress," ",throwable);
         //连接失败异常,关闭连接
         synchronized (this){
             notify();

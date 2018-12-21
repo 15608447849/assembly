@@ -10,12 +10,12 @@ import java.io.IOException;
  */
 public class TCP_server {
     public static void main(String[] args) throws IOException {
-        FtcBackupServer ftcBackupServer = new FtcBackupServer("D:\\ftcServer\\s","192.168.1.45",7777,0,0);
+        FtcBackupServer ftcBackupServer = new FtcBackupServer("D:\\ftcServer\\s","192.168.1.144",7777,0,0);
 //        ftcBackupServer.getClient().watchDirectory(true); //监听目录变化
 //        ftcBackupServer.getClient().addServerAddress();
         ftcBackupServer.setCallback(file -> Log.e("收到文件 - "+ file));
         try {
-            Thread.sleep(1000000);
+            Thread.sleep(100000000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }

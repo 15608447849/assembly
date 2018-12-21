@@ -2,6 +2,7 @@ package bottle.tcps.p;
 
 import sun.nio.ch.DirectBuffer;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -129,6 +130,7 @@ class SessionContentStore {
     private ByteBuffer sendBufferBySystemTcpStack;
     private ByteBuffer readBufferBySystemTcpStack;
     public ByteBuffer getSendBufferBySystemTcpStack() {
+
         if (sendBufferBySystemTcpStack==null){
 
             sendBufferBySystemTcpStack = createByteBuffer(BUFFER_BLOCK_SIZE+8);//八位协议位
@@ -137,6 +139,12 @@ class SessionContentStore {
         }
         sendBufferBySystemTcpStack.clear();
         return sendBufferBySystemTcpStack;
+    }
+
+    public ByteBuffer getSendBufferBySystemTcpStack(int len) {
+        ByteBuffer byteBuffer = ByteBuffer.allocate(len+8); ////八位协议位
+        byteBuffer.clear();
+        return byteBuffer;
     }
 
     public ByteBuffer getReadBufferBySystemTcpStack() {

@@ -25,19 +25,20 @@ public class FBCThreadByFileQueue extends FBCThread {
         while (isRunning){
             //在队列中查询,如果存在需要同步的文件 - 打开socket连接 -> socket连接在30秒内未使用,需要自动关闭
             try {
-                if (queue!=null){
                     BackupTask task = queue.take();
+//                    Log.i("获取到同步任务,准备执行" +task);
                     ftcBackupClient.bindSocketSyncUpload(task);
-                }
             }catch (Exception e){
                 e.printStackTrace();
             }
+
         }
     }
 
 
     public boolean putTask(BackupTask task) {
         try {
+            Log.i("添加同步任务 , 目标:" + task.getServerAddress());
             queue.put(task);
             return true;
         } catch (InterruptedException e) {

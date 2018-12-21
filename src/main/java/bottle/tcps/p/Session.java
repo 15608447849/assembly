@@ -1,6 +1,8 @@
 package bottle.tcps.p;
 
 
+import bottle.ftc.tools.Log;
+
 import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousSocketChannel;
@@ -20,6 +22,7 @@ public abstract class Session implements CompletionHandler<Integer, ByteBuffer>{
     private final SessionContentStore sessionContentStore = new SessionContentStore();//接受数据存储
     private final SessionOperation operation =  new SessionOperation(this);
     private final SessionContentHandle sessionHandle = new SessionContentHandle(this);
+    private final SendContentHandle sendContentHandle = new SendContentHandle(this);
     private long send_sum,recv_sum;
 
 
@@ -66,39 +69,27 @@ public abstract class Session implements CompletionHandler<Integer, ByteBuffer>{
             }
     }
 
-    private int sendIndex = 0;
+
+
     /**
      * 发送数据(同步-堵塞)
      */
     public void send(ByteBuffer buffer) {
                 if (buffer != null && socketImp.isAlive()){
                   buffer.flip();
-                  try {
-
-                      Future<Integer> future =  socketImp.getSocket().write(buffer); //发送消息到管道
-                      sendIndex = 0;
-                      while(true){
-                          if (future.isDone()){
-//                                send_sum+=future.get();
-//                                Log.i("总发送 : "+ send_sum+" byte");
-                              break;
-                          }
-                          sendIndex++;
-                          if (sendIndex>=10) Thread.sleep(50 * sendIndex);
-                      }
-                    } catch (Exception e) {
-                        //发送数据异常
-                        socketImp.getAction().error(this,null,e);
-                      socketImp.getAction().connectClosed(this);
-                    }
+//                  Log.i("send - " + buffer);
+                  sendContentHandle.putBuf(buffer);
                 }
     }
 
     public void clear(){
+
         //关闭处理读取消息的线程
         sessionHandle.close();
         //清理 剩余保存的数据 ,清理队里中已存在的数据
         sessionContentStore.clear();
+        //清理发送数据
+        sendContentHandle.clear();
 
     }
 
