@@ -43,7 +43,7 @@ public class FileUpServerHandle extends FtcTcpActionsAdapter {
     public void bindSession( Session session){
         // session.getSocketImp().getSocket().toString()+"-"+
         this.flag = getClass().getSimpleName()+"-"+ftcBackupServer.getSockSer().getCurrentClientSize()+" >>  ";
-        Log.i(flag);
+//        Log.i(flag);
         session.getSocketImp().setAction(this);//绑定传输管道
         session.getSocketImp().getSession().getOperation().writeString("start","utf-8");
     }
@@ -68,7 +68,7 @@ public class FileUpServerHandle extends FtcTcpActionsAdapter {
      */
     private void handle(Session session,Map<String, String> map) {
         String protocol = map.get("protocol");
-        Log.i(flag+" "+protocol);
+//        Log.i(flag+" "+protocol);
         if (protocol.equals(Protocol.C_FILE_BACKUP_QUEST)){
             backupRequest(session,map);
         }else if (protocol.equals(Protocol.C_FILE_BACKUP_TRS_START)){

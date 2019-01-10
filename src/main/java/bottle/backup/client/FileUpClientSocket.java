@@ -99,6 +99,7 @@ public class FileUpClientSocket extends FtcTcpActionsAdapter{
     private volatile boolean isUsing = false; //是否在使用中
 
     public void setCurFile(BackupFile curFile) {
+//        Log.i(curFile);
         if (isUsing) return;
         isUsing = true;//设置使用中
         this.curFile = curFile;
@@ -255,13 +256,13 @@ public class FileUpClientSocket extends FtcTcpActionsAdapter{
                 }
             }
 
-            if (isUsing) Log.i(
-                    Thread.currentThread(),flag," 结束 ", curFile.getFullPath(),
-                    " 大小:"+curFile.getFileLength() +
-                            " 时间:" +(System.currentTimeMillis() - time)
-            );
+//            if (isUsing) Log.i(
+//                    Thread.currentThread(),flag," 结束 ", curFile.getFullPath(),
+//                    " 大小:"+curFile.getFileLength() +
+//                            " 时间:" +(System.currentTimeMillis() - time)
+//            );
 
-            Thread.sleep(5 * 1000);
+            Thread.sleep(2 * 1000);
             notifyEnd(map);
         }catch (Exception e){
             e.printStackTrace();
@@ -379,8 +380,9 @@ public class FileUpClientSocket extends FtcTcpActionsAdapter{
 
 
     private void clearCurFile(){
+        if (curFile!=null) Log.i(flag," ",curFile);
         clearRandomAccessFile();
-        curFile =null;
+        curFile = null;
     }
 
     //传输完成

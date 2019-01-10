@@ -38,7 +38,7 @@ public class FBCThreadByFileQueue extends FBCThread {
 
     public boolean putTask(BackupTask task) {
         try {
-            Log.i("添加同步任务 , 目标:" + task.getServerAddress());
+//            Log.i("添加同步任务 , 目标:" + task.getServerAddress());
             queue.put(task);
             return true;
         } catch (InterruptedException e) {

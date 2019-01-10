@@ -56,4 +56,9 @@ public class BackupFile {
     public String getMd5() {
         return md5;
     }
+
+    @Override
+    public String toString() {
+        return getFullPath();
+    }
 }

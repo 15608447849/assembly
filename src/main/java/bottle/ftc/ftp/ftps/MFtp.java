@@ -43,7 +43,7 @@ public class MFtp extends it.sauronsoftware.ftp4j.FTPClient implements FtpClient
             }
 //            Log.i(TAG,"连接> "+ getHost()+ ":"+ getPort());
         return true;
-        } catch (IOException | FTPException | FTPIllegalReplyException e) {
+        } catch (IOException | FTPException | FTPIllegalReplyException ignored) {
 
         }
         return false;

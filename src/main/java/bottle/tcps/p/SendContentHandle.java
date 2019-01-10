@@ -28,7 +28,7 @@ public class SendContentHandle extends Thread{
     public void putBuf(ByteBuffer buffer) {
 
         try {
-            Log.i("放入"+buffer);
+//            Log.i("放入"+buffer);
             sendBufferQueue.put(buffer);
         } catch (InterruptedException e) {
             e.printStackTrace();
